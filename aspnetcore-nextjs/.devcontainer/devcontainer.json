@@ -1,0 +1,37 @@
+{
+  "name": "ASP.NET Core Web API + React/Next.js",
+  "image": "mcr.microsoft.com/devcontainers/dotnet:1-8.0-bookworm",
+  "remoteUser": "vscode",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "20"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-dotnettools.csharp",
+        "ms-dotnettools.csdevkit",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode"
+      ]
+    }
+  },
+  "forwardPorts": [
+    5000,
+    5001,
+    3000
+  ],
+  "portsAttributes": {
+    "5000": {
+      "label": "ASP.NET Core Web API"
+    },
+    "5001": {
+      "label": "ASP.NET Core HTTPS"
+    },
+    "3000": {
+      "label": "Next.js"
+    }
+  },
+  "postCreateCommand": "dotnet --info && node --version && npm --version"
+}
