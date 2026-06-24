@@ -4,7 +4,7 @@
 
 | Stack | Status | DB | Migration | Validation | Auth | Test | Notes |
 |---|---|---|---|---|---|---|---|
-| ASP.NET Core Web API + React/Next.js | Todo | TBD | TBD | TBD | TBD | TBD | 未実装。 |
+| ASP.NET Core Web API + React/Next.js | WIP | TBD | TBD | TBD | TBD | TBD | `aspnetcore-nextjs/` に作業用 docs を追加。 |
 | T3 Stack | Todo | TBD | TBD | TBD | TBD | TBD | 未実装。 |
 | Spring Boot REST API + React/Next.js | Todo | TBD | TBD | TBD | TBD | TBD | 未実装。 |
 | ASP.NET Core MVC + Razor | Todo | TBD | TBD | TBD | TBD | TBD | 未実装。 |
