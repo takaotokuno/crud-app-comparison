@@ -1,0 +1,46 @@
+# Build output
+.next/
+out/
+dist/
+build/
+.turbo/
+
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Database and generated local files
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+prisma/dev.db
+prisma/dev.db-journal
+
+# Test and coverage output
+coverage/
+.playwright/
+test-results/
+
+# IDE/editor
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Local development
+.vercel/
