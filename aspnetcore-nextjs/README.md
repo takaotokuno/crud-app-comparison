@@ -4,12 +4,15 @@ ASP.NET Core Web API をバックエンド、React/Next.js をフロントエン
 
 ## 想定構成
 
+詳細なディレクトリ構成案は [docs/directory-structure.md](./docs/directory-structure.md) にまとめています。
+
 ```text
 aspnetcore-nextjs/
 ├── .devcontainer/
 │   └── devcontainer.json
-├── backend/      # ASP.NET Core Web API プロジェクト
-├── frontend/     # React/Next.js プロジェクト
+├── backend/      # ASP.NET Core Web API ソリューション
+├── frontend/     # React/Next.js アプリケーション
+├── docs/         # 構成メモ、API契約、実装メモ
 ├── .gitignore
 └── README.md
 ```
