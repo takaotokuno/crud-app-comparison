@@ -1,0 +1,27 @@
+{
+  "name": "T3 Stack",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:1-20-bookworm",
+  "remoteUser": "node",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "Prisma.prisma"
+      ]
+    }
+  },
+  "forwardPorts": [
+    3000,
+    5555
+  ],
+  "portsAttributes": {
+    "3000": {
+      "label": "Next.js"
+    },
+    "5555": {
+      "label": "Prisma Studio"
+    }
+  },
+  "postCreateCommand": "node --version && npm --version"
+}
