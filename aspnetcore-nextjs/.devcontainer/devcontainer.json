@@ -1,6 +1,6 @@
 {
   "name": "ASP.NET Core Web API + React/Next.js",
-  "image": "mcr.microsoft.com/devcontainers/dotnet:1-8.0-bookworm",
+  "image": "mcr.microsoft.com/devcontainers/dotnet:1-9.0-bookworm",
   "remoteUser": "vscode",
   "features": {
     "ghcr.io/devcontainers/features/node:1": {
