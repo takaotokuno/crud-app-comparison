@@ -1,0 +1,36 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: AspNetNextApp.Api/Dockerfile
+    container_name: aspnet-backend
+    ports:
+      - "5000:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Server=db,1433;Database=AppDb;User Id=sa;Password=Your_strong_password123;TrustServerCertificate=True;Encrypt=False;"
+    depends_on:
+      - db
+    networks:
+      - aspnetcore-nextjs
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: next-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:5000
+    depends_on:
+      - backend
+    networks:
+      - aspnetcore-nextjs
+
+networks:
+  aspnetcore-nextjs:
+    external: true
+    name: aspnetcore-nextjs

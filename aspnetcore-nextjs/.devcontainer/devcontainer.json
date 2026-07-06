@@ -1,11 +1,22 @@
 {
   "name": "ASP.NET Core Web API + React/Next.js",
-  "image": "mcr.microsoft.com/devcontainers/dotnet:1-9.0-bookworm",
+  "dockerComposeFile": [
+    "../docker-compose.yml",
+    "docker-compose.yml"
+  ],
+  "service": "devcontainer",
+  "workspaceFolder": "/workspaces/aspnetcore-nextjs",
   "remoteUser": "vscode",
+  "runServices": [
+    "db",
+    "devcontainer"
+  ],
+  "shutdownAction": "stopCompose",
   "features": {
     "ghcr.io/devcontainers/features/node:1": {
       "version": "22"
-    }
+    },
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
   },
   "customizations": {
     "vscode": {
@@ -20,7 +31,8 @@
   "forwardPorts": [
     5000,
     5001,
-    3000
+    3000,
+    1433
   ],
   "portsAttributes": {
     "5000": {
@@ -31,7 +43,10 @@
     },
     "3000": {
       "label": "Next.js"
+    },
+    "1433": {
+      "label": "SQL Server"
     }
   },
-  "postCreateCommand": "dotnet --info && node --version && npm --version"
+  "postCreateCommand": "bash .devcontainer/post-create.sh"
 }

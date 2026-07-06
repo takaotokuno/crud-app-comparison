@@ -1,0 +1,19 @@
+services:
+  devcontainer:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+    container_name: aspnetcore-nextjs-devcontainer
+    command: sleep infinity
+    init: true
+    volumes:
+      - .:/workspaces/aspnetcore-nextjs:cached
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: "Server=db,1433;Database=AppDb;User Id=sa;Password=Your_strong_password123;TrustServerCertificate=True;Encrypt=False;"
+    networks:
+      - aspnetcore-nextjs
+
+networks:
+  aspnetcore-nextjs:
+    name: aspnetcore-nextjs
