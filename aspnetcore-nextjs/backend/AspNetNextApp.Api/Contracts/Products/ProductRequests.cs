@@ -1,3 +1,4 @@
+using AspNetNextApp.Api.Enums;
 using AspNetNextApp.Api.Entities;
 using Microsoft.AspNetCore.Mvc;
 

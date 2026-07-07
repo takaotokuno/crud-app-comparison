@@ -1,4 +1,5 @@
 using AspNetNextApp.Api.Contracts.Products;
+using AspNetNextApp.Api.Enums;
 using AspNetNextApp.Api.Services.Products;
 using Microsoft.AspNetCore.Mvc;
 

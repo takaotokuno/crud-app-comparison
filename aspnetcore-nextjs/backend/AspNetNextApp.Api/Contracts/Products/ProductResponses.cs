@@ -1,4 +1,4 @@
-using AspNetNextApp.Api.Entities;
+using AspNetNextApp.Api.Enums;
 
 namespace AspNetNextApp.Api.Contracts.Products;
 
