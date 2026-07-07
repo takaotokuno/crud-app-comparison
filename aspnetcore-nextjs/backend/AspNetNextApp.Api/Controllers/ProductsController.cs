@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace AspNetNextApp.Api.Controllers
 {
     [ApiController]
-    [Route("api/products")]
+    [Route("products")]
     [Authorize]
     public sealed class ProductsController(IProductService productService) : ControllerBase
     {

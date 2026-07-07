@@ -14,6 +14,16 @@ namespace AspNetNextApp.Api.Tests.Controllers
 {
     public sealed class ProductsControllerTests
     {
+
+        [Fact]
+        public void Controller_UsesStandardProductsRoute()
+        {
+            RouteAttribute attribute = Assert.Single(
+                typeof(ProductsController).GetCustomAttributes(typeof(RouteAttribute), inherit: true).Cast<RouteAttribute>());
+
+            Assert.Equal("products", attribute.Template);
+        }
+
         [Fact]
         public async Task ListAsync_ForwardsQueryParametersAndReturnsOk()
         {

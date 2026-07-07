@@ -82,6 +82,22 @@ namespace AspNetNextApp.Api.Tests.Controllers
             _ = Assert.IsType<AllowAnonymousAttribute>(attribute);
         }
 
+
+        [Theory]
+        [InlineData(nameof(AccountController.LoginAsync), "login")]
+        [InlineData(nameof(AccountController.LogoutAsync), "logout")]
+        [InlineData(nameof(AccountController.GetMe), "me")]
+        public void AccountEndpoints_UseStandardRouteTemplates(string actionName, string routeTemplate)
+        {
+            System.Reflection.MethodInfo method = typeof(AccountController).GetMethods()
+                .Single(method => method.Name == actionName);
+
+            HttpMethodAttribute attribute = Assert.Single(
+                method.GetCustomAttributes(typeof(HttpMethodAttribute), inherit: true).Cast<HttpMethodAttribute>());
+
+            Assert.Equal(routeTemplate, attribute.Template);
+        }
+
         private sealed class CapturingAccountAuthenticationService : IAccountAuthenticationService
         {
             public string? CapturedRegisterEmail { get; private set; }

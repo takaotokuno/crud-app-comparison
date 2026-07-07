@@ -12,14 +12,14 @@ export function AppHeader() {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    requestJson<AccountUser>("/api/account/me")
+    requestJson<AccountUser>("/api/me")
       .then(setUser)
       .catch(() => setUser(null));
   }, []);
 
   async function logout() {
     try {
-      await requestJson<void>("/api/account/logout", { method: "POST" });
+      await requestJson<void>("/api/logout", { method: "POST" });
       router.push("/login");
       router.refresh();
     } catch (error) {
