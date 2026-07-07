@@ -2,9 +2,10 @@ using AspNetNextApp.Api.Contracts.Account;
 using AspNetNextApp.Api.Controllers;
 using AspNetNextApp.Api.Entities;
 using AspNetNextApp.Api.Services.Accounts;
+
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+
 using Xunit;
 
 namespace AspNetNextApp.Api.Tests.Controllers
@@ -29,9 +30,9 @@ namespace AspNetNextApp.Api.Tests.Controllers
 
             ActionResult<AccountUserResponse> actionResult = await controller.RegisterAsync(request, CancellationToken.None);
 
-            var createdResult = Assert.IsType<CreatedAtActionResult>(actionResult.Result);
+            CreatedAtActionResult createdResult = Assert.IsType<CreatedAtActionResult>(actionResult.Result);
             Assert.Equal(nameof(AccountController.GetMe), createdResult.ActionName);
-            var response = Assert.IsType<AccountUserResponse>(createdResult.Value);
+            AccountUserResponse response = Assert.IsType<AccountUserResponse>(createdResult.Value);
             Assert.Equal(user.Id, response.Id);
             Assert.Equal(user.Email, response.Email);
             Assert.Equal(user.Name, response.Name);
@@ -54,17 +55,17 @@ namespace AspNetNextApp.Api.Tests.Controllers
 
             ActionResult<AccountUserResponse> actionResult = await controller.RegisterAsync(request, CancellationToken.None);
 
-            var conflictResult = Assert.IsType<ConflictObjectResult>(actionResult.Result);
+            ConflictObjectResult conflictResult = Assert.IsType<ConflictObjectResult>(actionResult.Result);
             Assert.Equal(error, conflictResult.Value?.GetType().GetProperty("message")?.GetValue(conflictResult.Value));
         }
 
         [Fact]
         public void Controller_RequiresAuthenticatedUsersByDefault()
         {
-            var attribute = Assert.Single(
+            object attribute = Assert.Single(
                 typeof(AccountController).GetCustomAttributes(typeof(AuthorizeAttribute), inherit: true));
 
-            Assert.IsType<AuthorizeAttribute>(attribute);
+            _ = Assert.IsType<AuthorizeAttribute>(attribute);
         }
 
         [Theory]
@@ -75,10 +76,10 @@ namespace AspNetNextApp.Api.Tests.Controllers
             System.Reflection.MethodInfo method = typeof(AccountController).GetMethods()
                 .Single(method => method.Name == actionName);
 
-            var attribute = Assert.Single(
+            object attribute = Assert.Single(
                 method.GetCustomAttributes(typeof(AllowAnonymousAttribute), inherit: true));
 
-            Assert.IsType<AllowAnonymousAttribute>(attribute);
+            _ = Assert.IsType<AllowAnonymousAttribute>(attribute);
         }
 
         private sealed class CapturingAccountAuthenticationService : IAccountAuthenticationService

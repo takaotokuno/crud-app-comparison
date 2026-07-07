@@ -1,10 +1,13 @@
 using AspNetNextApp.Api.Attribute;
 using AspNetNextApp.Api.Contracts.Products;
 using AspNetNextApp.Api.Controllers;
+using AspNetNextApp.Api.Enums;
 using AspNetNextApp.Api.Services.Products;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+
 using Xunit;
 
 namespace AspNetNextApp.Api.Tests.Controllers
@@ -14,14 +17,14 @@ namespace AspNetNextApp.Api.Tests.Controllers
         [Fact]
         public async Task ListAsync_ForwardsQueryParametersAndReturnsOk()
         {
-            ProductListResponse response = new ProductListResponse([], 2, 10, 0);
-            CapturingProductService service = new CapturingProductService
+            ProductListResponse response = new([], 2, 10, 0);
+            CapturingProductService service = new()
             {
                 ListResult = ProductResult<ProductListResponse>.Success(response)
             };
-            ProductsController controller = new ProductsController(service);
+            ProductsController controller = new(service);
 
-            ListProductsRequest request = new ListProductsRequest
+            ListProductsRequest request = new()
             {
                 Query = "coffee",
                 Status = ProductStatus.Active,
@@ -35,7 +38,7 @@ namespace AspNetNextApp.Api.Tests.Controllers
 
             ActionResult<ProductListResponse> actionResult = await controller.ListAsync(request, CancellationToken.None);
 
-            var okResult = Assert.IsType<OkObjectResult>(actionResult.Result);
+            OkObjectResult okResult = Assert.IsType<OkObjectResult>(actionResult.Result);
             Assert.Same(response, okResult.Value);
             Assert.NotNull(service.CapturedListQuery);
             Assert.Equal("coffee", service.CapturedListQuery.Query);
@@ -54,7 +57,7 @@ namespace AspNetNextApp.Api.Tests.Controllers
             Guid productId = Guid.NewGuid();
             DateTimeOffset createdAt = DateTimeOffset.UtcNow.AddMinutes(-5);
             DateTimeOffset updatedAt = DateTimeOffset.UtcNow;
-            ProductDetailResponse response = new ProductDetailResponse(
+            ProductDetailResponse response = new(
                 productId,
                 "SKU-001",
                 "Coffee Beans",
@@ -66,12 +69,12 @@ namespace AspNetNextApp.Api.Tests.Controllers
                 5,
                 createdAt,
                 updatedAt);
-            CapturingProductService service = new CapturingProductService
+            CapturingProductService service = new()
             {
                 CreateResult = ProductResult<ProductDetailResponse>.Success(response)
             };
-            ProductsController controller = new ProductsController(service);
-            CreateProductRequest request = new CreateProductRequest(
+            ProductsController controller = new(service);
+            CreateProductRequest request = new(
                 "SKU-001",
                 "Coffee Beans",
                 "Medium roast",
@@ -83,7 +86,7 @@ namespace AspNetNextApp.Api.Tests.Controllers
 
             ActionResult<ProductDetailResponse> actionResult = await controller.CreateAsync(request, CancellationToken.None);
 
-            var createdResult = Assert.IsType<CreatedAtActionResult>(actionResult.Result);
+            CreatedAtActionResult createdResult = Assert.IsType<CreatedAtActionResult>(actionResult.Result);
             Assert.Equal(nameof(ProductsController.GetAsync), createdResult.ActionName);
             Assert.Equal(productId, createdResult.RouteValues!["id"]);
             Assert.Same(response, createdResult.Value);
@@ -102,15 +105,15 @@ namespace AspNetNextApp.Api.Tests.Controllers
         public async Task GetAsync_WhenServiceReturnsNotFoundReturnsNotFoundWithMessage()
         {
             const string error = "Product was not found.";
-            CapturingProductService service = new CapturingProductService
+            CapturingProductService service = new()
             {
                 GetResult = ProductResult<ProductDetailResponse>.Failure(error, ProductErrorType.NotFound)
             };
-            ProductsController controller = new ProductsController(service);
+            ProductsController controller = new(service);
 
             ActionResult<ProductDetailResponse> actionResult = await controller.GetAsync(Guid.NewGuid(), CancellationToken.None);
 
-            var objectResult = Assert.IsType<ObjectResult>(actionResult.Result);
+            ObjectResult objectResult = Assert.IsType<ObjectResult>(actionResult.Result);
             Assert.Equal(StatusCodes.Status404NotFound, objectResult.StatusCode);
             Assert.Equal(error, objectResult.Value?.GetType().GetProperty("message")?.GetValue(objectResult.Value));
         }
@@ -118,24 +121,24 @@ namespace AspNetNextApp.Api.Tests.Controllers
         [Fact]
         public async Task DeleteAsync_WhenServiceSucceedsReturnsNoContent()
         {
-            CapturingProductService service = new CapturingProductService
+            CapturingProductService service = new()
             {
                 DeleteResult = ProductResult<bool>.Success(true)
             };
-            ProductsController controller = new ProductsController(service);
+            ProductsController controller = new(service);
 
             IActionResult actionResult = await controller.DeleteAsync(Guid.NewGuid(), CancellationToken.None);
 
-            Assert.IsType<NoContentResult>(actionResult);
+            _ = Assert.IsType<NoContentResult>(actionResult);
         }
 
         [Fact]
         public void Controller_RequiresAuthenticatedUsers()
         {
-            var attribute = Assert.Single(
+            object attribute = Assert.Single(
                 typeof(ProductsController).GetCustomAttributes(typeof(AuthorizeAttribute), inherit: true));
 
-            Assert.IsType<AuthorizeAttribute>(attribute);
+            _ = Assert.IsType<AuthorizeAttribute>(attribute);
         }
 
         [Theory]
@@ -149,9 +152,9 @@ namespace AspNetNextApp.Api.Tests.Controllers
             System.Reflection.MethodInfo method = typeof(ProductsController).GetMethods()
                 .Single(method => method.Name == actionName);
 
-            var attribute = Assert.Single(
+            object attribute = Assert.Single(
                 method.GetCustomAttributes(typeof(UserRoleAttribute), inherit: true));
-            var roleAttribute = Assert.IsType<UserRoleAttribute>(attribute);
+            UserRoleAttribute roleAttribute = Assert.IsType<UserRoleAttribute>(attribute);
 
             Assert.Equal(expectedRoles, roleAttribute.Roles);
         }
