@@ -1,0 +1,67 @@
+export type UserRole = 0 | 1 | 2;
+export type ProductStatus = 0 | 1 | 2;
+
+export type AccountUser = {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+};
+
+export type ProductSummary = {
+  id: string;
+  sku: string;
+  name: string;
+  category: string | null;
+  price: number;
+  status: ProductStatus;
+  quantity: number;
+  safetyStock: number;
+  updatedAt: string;
+};
+
+export type ProductDetail = ProductSummary & {
+  description: string | null;
+  createdAt: string;
+};
+
+export type ProductListResponse = {
+  items: ProductSummary[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+};
+
+export type ProductFormState = {
+  sku: string;
+  name: string;
+  description: string;
+  category: string;
+  price: string;
+  status: ProductStatus;
+  initialQuantity: string;
+  safetyStock: string;
+};
+
+export const initialFormState: ProductFormState = {
+  sku: "",
+  name: "",
+  description: "",
+  category: "",
+  price: "",
+  status: 0,
+  initialQuantity: "0",
+  safetyStock: "0",
+};
+
+export const statusLabels: Record<ProductStatus, string> = {
+  0: "販売中",
+  1: "停止中",
+  2: "廃番",
+};
+
+export const roleLabels: Record<UserRole, string> = {
+  0: "管理者",
+  1: "在庫担当者",
+  2: "閲覧者",
+};
