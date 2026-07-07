@@ -1,5 +1,4 @@
 using AspNetNextApp.Api.Contracts.Products;
-using AspNetNextApp.Api.Entities;
 using AspNetNextApp.Api.Services.Products;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,17 +11,9 @@ public sealed class ProductsController(IProductService productService) : Control
     [HttpGet]
     [ProducesResponseType(typeof(ProductListResponse), StatusCodes.Status200OK)]
     public async Task<ActionResult<ProductListResponse>> ListAsync(
-        [FromQuery(Name = "q")] string? query,
-        [FromQuery] ProductStatus? status,
-        [FromQuery] string? category,
-        [FromQuery(Name = "low_stock")] bool? lowStock,
-        [FromQuery(Name = "sort_by")] string? sortBy,
-        [FromQuery(Name = "sort_direction")] string? sortDirection,
-        [FromQuery] int page = 1,
-        [FromQuery(Name = "page_size")] int pageSize = 20,
+        [FromQuery] ListProductsRequest request,
         CancellationToken cancellationToken = default)
     {
-        var request = new ListProductsRequest(query, status, category, lowStock, sortBy, sortDirection, page, pageSize);
         var result = await productService.ListAsync(
             new ListProductsQuery(
                 request.Query,
