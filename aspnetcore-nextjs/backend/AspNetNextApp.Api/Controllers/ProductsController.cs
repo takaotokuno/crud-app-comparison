@@ -31,7 +31,7 @@ public sealed class ProductsController(IProductService productService) : Control
 
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(ProductDetailResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status501NotImplemented)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ProductDetailResponse>> GetAsync(Guid id, CancellationToken cancellationToken)
     {
         var request = new GetProductRequest(id);
@@ -42,7 +42,8 @@ public sealed class ProductsController(IProductService productService) : Control
 
     [HttpPost]
     [ProducesResponseType(typeof(ProductDetailResponse), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status501NotImplemented)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<ProductDetailResponse>> CreateAsync(
         [FromBody] CreateProductRequest request,
         CancellationToken cancellationToken)
@@ -69,7 +70,9 @@ public sealed class ProductsController(IProductService productService) : Control
 
     [HttpPut("{id:guid}")]
     [ProducesResponseType(typeof(ProductDetailResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status501NotImplemented)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<ProductDetailResponse>> UpdateAsync(
         Guid id,
         [FromBody] UpdateProductRequest request,
@@ -91,7 +94,7 @@ public sealed class ProductsController(IProductService productService) : Control
 
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status501NotImplemented)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
         var request = new DeleteProductRequest(id);
@@ -99,7 +102,7 @@ public sealed class ProductsController(IProductService productService) : Control
 
         if (!result.IsSuccess)
         {
-            return StatusCode(StatusCodes.Status501NotImplemented, new { message = result.Error });
+            return ToErrorActionResult(result);
         }
 
         return NoContent();
@@ -112,6 +115,19 @@ public sealed class ProductsController(IProductService productService) : Control
             return Ok(result.Value);
         }
 
-        return StatusCode(StatusCodes.Status501NotImplemented, new { message = result.Error });
+        return ToErrorActionResult(result);
+    }
+
+
+    private ObjectResult ToErrorActionResult<T>(ProductResult<T> result)
+    {
+        var statusCode = result.ErrorType switch
+        {
+            ProductErrorType.NotFound => StatusCodes.Status404NotFound,
+            ProductErrorType.Conflict => StatusCodes.Status409Conflict,
+            _ => StatusCodes.Status400BadRequest,
+        };
+
+        return StatusCode(statusCode, new { message = result.Error });
     }
 }
