@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace AspNetNextApp.Api.Controllers
 {
     [ApiController]
-    [Route("api/account")]
+    [Route("")]
     [Authorize]
     public sealed class AccountController(
         IAccountAuthenticationService accountAuthenticationService) : ControllerBase

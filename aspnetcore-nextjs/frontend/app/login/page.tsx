@@ -17,7 +17,7 @@ export default function LoginPage() {
     setError("");
     setIsLoading(true);
     try {
-      await requestJson<AccountUser>("/api/account/login", {
+      await requestJson<AccountUser>("/api/login", {
         method: "POST",
         body: JSON.stringify({ email, password }),
       });
