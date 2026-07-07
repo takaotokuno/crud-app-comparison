@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 
+using AspNetNextApp.Api.Enums;
+
 namespace AspNetNextApp.Api.Entities;
 
 public sealed class User

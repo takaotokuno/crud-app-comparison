@@ -1,4 +1,4 @@
-namespace AspNetNextApp.Api.Entities;
+namespace AspNetNextApp.Api.Enums;
 
 public enum UserRole
 {
