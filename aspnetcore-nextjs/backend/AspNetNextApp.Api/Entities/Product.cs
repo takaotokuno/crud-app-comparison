@@ -76,6 +76,12 @@ namespace AspNetNextApp.Api.Entities
             EnsureValid();
         }
 
+        public void Discontinue()
+        {
+            Status = ProductStatus.Discontinued;
+            EnsureValid();
+        }
+
         private void EnsureValid()
         {
             Validator.ValidateObject(this, new ValidationContext(this), validateAllProperties: true);

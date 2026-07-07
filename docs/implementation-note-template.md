@@ -23,6 +23,10 @@
 - Product:
 - Stock:
 - StockTransaction:
+- 削除方針:
+  - Product の削除操作は論理削除（`IsDeleted = true` または `Status = Discontinued`）として扱うか。
+  - Product / Stock / StockTransaction の物理削除可否と外部キー `ON DELETE` 設定。
+  - StockTransaction が存在する Product / Stock は履歴保持のため物理削除しないこと。
 
 ## 共通仕様との差分
 

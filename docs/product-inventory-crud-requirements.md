@@ -185,9 +185,12 @@
 ### 7.7 商品削除
 
 - 削除前に確認を行う。
+- 削除操作は Product の論理削除として扱い、`Products.IsDeleted = true` または `Status = Discontinued` へ更新する。
+- Product は在庫および在庫履歴と関連するため、原則として物理削除しない。
+- Stock および StockTransaction は履歴保持のため削除しない。
+- StockTransaction が存在する Product / Stock に対する物理削除は行わない。
+- 実装メモには Product / Stock / StockTransaction の削除方針と、DB 外部キー制約上の物理削除可否を明記する。
 - 削除成功後は一覧画面へ遷移する。
-- Product を削除する場合、関連する Stock と StockTransaction の扱いを実装メモに明記する。
-- 物理削除を基本とする。ただし、構成比較のために論理削除を採用する場合は実装メモに明記する。
 
 ## 8. CRUD操作要件
 
