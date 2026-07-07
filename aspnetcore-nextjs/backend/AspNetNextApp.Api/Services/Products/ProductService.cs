@@ -1,32 +1,251 @@
 using AspNetNextApp.Api.Contracts.Products;
+using AspNetNextApp.Api.Data;
+using AspNetNextApp.Api.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace AspNetNextApp.Api.Services.Products;
 
-public sealed class ProductService : IProductService
+public sealed partial class ProductService(AppDbContext dbContext) : IProductService
 {
-    public Task<ProductResult<ProductListResponse>> ListAsync(ListProductsQuery query, CancellationToken cancellationToken = default)
+    private const int MaxPageSize = 100;
+
+    public async Task<ProductResult<ProductListResponse>> ListAsync(ListProductsQuery query, CancellationToken cancellationToken = default)
     {
-        var response = new ProductListResponse([], query.Page, query.PageSize, 0);
-        return Task.FromResult(ProductResult<ProductListResponse>.Success(response));
+        var page = Math.Max(query.Page, 1);
+        var pageSize = Math.Clamp(query.PageSize, 1, MaxPageSize);
+
+        var products = dbContext.Products
+            .AsNoTracking()
+            .Include(product => product.Stock)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(query.Query))
+        {
+            var keyword = query.Query.Trim();
+            products = products.Where(product =>
+                product.Sku.Contains(keyword) ||
+                product.Name.Contains(keyword) ||
+                (product.Description != null && product.Description.Contains(keyword)));
+        }
+
+        if (query.Status.HasValue)
+        {
+            products = products.Where(product => product.Status == query.Status.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(query.Category))
+        {
+            var category = query.Category.Trim();
+            products = products.Where(product => product.Category == category);
+        }
+
+        if (query.LowStock == true)
+        {
+            products = products.Where(product => product.Stock != null && product.Stock.Quantity <= product.Stock.SafetyStock);
+        }
+
+        var totalCount = await products.CountAsync(cancellationToken);
+        var items = await ApplySort(products, query.SortBy, query.SortDirection)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(product => new ProductSummaryResponse(
+                product.Id,
+                product.Sku,
+                product.Name,
+                product.Category,
+                product.Price,
+                product.Status,
+                product.Stock == null ? 0 : product.Stock.Quantity,
+                product.Stock == null ? 0 : product.Stock.SafetyStock,
+                product.UpdatedAt))
+            .ToListAsync(cancellationToken);
+
+        return ProductResult<ProductListResponse>.Success(new ProductListResponse(items, page, pageSize, totalCount));
     }
 
-    public Task<ProductResult<ProductDetailResponse>> GetAsync(GetProductQuery query, CancellationToken cancellationToken = default)
+    public async Task<ProductResult<ProductDetailResponse>> GetAsync(GetProductQuery query, CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(ProductResult<ProductDetailResponse>.Failure("Not implemented."));
+        var product = await FindProductWithStockAsync(query.Id, cancellationToken);
+
+        return product is null
+            ? ProductResult<ProductDetailResponse>.Failure("Product was not found.", ProductErrorType.NotFound)
+            : ProductResult<ProductDetailResponse>.Success(ToDetailResponse(product));
     }
 
-    public Task<ProductResult<ProductDetailResponse>> CreateAsync(CreateProductCommand command, CancellationToken cancellationToken = default)
+    public async Task<ProductResult<ProductDetailResponse>> CreateAsync(CreateProductCommand command, CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(ProductResult<ProductDetailResponse>.Failure("Not implemented."));
+        var validationError = ValidateProductInput(
+            command.Sku,
+            command.Name,
+            command.Description,
+            command.Category,
+            command.Price,
+            command.Status,
+            command.InitialQuantity,
+            command.SafetyStock);
+        if (validationError is not null)
+        {
+            return ProductResult<ProductDetailResponse>.Failure(validationError);
+        }
+
+        var sku = command.Sku.Trim();
+        if (await IsSkuInUseAsync(sku, excludedProductId: null, cancellationToken))
+        {
+            return ProductResult<ProductDetailResponse>.Failure("SKU is already in use.", ProductErrorType.Conflict);
+        }
+
+        var product = Product.Create(
+            sku,
+            command.Name,
+            command.Description,
+            command.Category,
+            command.Price,
+            command.Status,
+            command.InitialQuantity,
+            command.SafetyStock);
+
+        dbContext.Products.Add(product);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return ProductResult<ProductDetailResponse>.Success(ToDetailResponse(product));
     }
 
-    public Task<ProductResult<ProductDetailResponse>> UpdateAsync(UpdateProductCommand command, CancellationToken cancellationToken = default)
+    public async Task<ProductResult<ProductDetailResponse>> UpdateAsync(UpdateProductCommand command, CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(ProductResult<ProductDetailResponse>.Failure("Not implemented."));
+        var validationError = ValidateProductInput(command.Sku, command.Name, command.Description, command.Category, command.Price, command.Status);
+        if (validationError is not null)
+        {
+            return ProductResult<ProductDetailResponse>.Failure(validationError);
+        }
+
+        var product = await FindProductWithStockAsync(command.Id, cancellationToken);
+        if (product is null)
+        {
+            return ProductResult<ProductDetailResponse>.Failure("Product was not found.", ProductErrorType.NotFound);
+        }
+
+        var sku = command.Sku.Trim();
+        if (await IsSkuInUseAsync(sku, command.Id, cancellationToken))
+        {
+            return ProductResult<ProductDetailResponse>.Failure("SKU is already in use.", ProductErrorType.Conflict);
+        }
+
+        product.UpdateDetails(sku, command.Name, command.Description, command.Category, command.Price, command.Status);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return ProductResult<ProductDetailResponse>.Success(ToDetailResponse(product));
     }
 
-    public Task<ProductResult<bool>> DeleteAsync(DeleteProductCommand command, CancellationToken cancellationToken = default)
+    public async Task<ProductResult<bool>> DeleteAsync(DeleteProductCommand command, CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(ProductResult<bool>.Failure("Not implemented."));
+        var product = await dbContext.Products.FindAsync([command.Id], cancellationToken);
+        if (product is null)
+        {
+            return ProductResult<bool>.Failure("Product was not found.", ProductErrorType.NotFound);
+        }
+
+        dbContext.Products.Remove(product);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return ProductResult<bool>.Success(true);
     }
+
+    private static IQueryable<Product> ApplySort(IQueryable<Product> products, string? sortBy, string? sortDirection)
+    {
+        var descending = string.Equals(sortDirection, "desc", StringComparison.OrdinalIgnoreCase);
+
+        return sortBy?.Trim().ToLowerInvariant() switch
+        {
+            "sku" => descending ? products.OrderByDescending(product => product.Sku) : products.OrderBy(product => product.Sku),
+            "name" => descending ? products.OrderByDescending(product => product.Name) : products.OrderBy(product => product.Name),
+            "price" => descending ? products.OrderByDescending(product => product.Price) : products.OrderBy(product => product.Price),
+            "quantity" => descending
+                ? products.OrderByDescending(product => product.Stock == null ? 0 : product.Stock.Quantity)
+                : products.OrderBy(product => product.Stock == null ? 0 : product.Stock.Quantity),
+            "created_at" => descending ? products.OrderByDescending(product => product.CreatedAt) : products.OrderBy(product => product.CreatedAt),
+            "updated_at" or _ => descending || string.IsNullOrWhiteSpace(sortDirection)
+                ? products.OrderByDescending(product => product.UpdatedAt)
+                : products.OrderBy(product => product.UpdatedAt),
+        };
+    }
+
+    private static string? ValidateProductInput(
+        string sku,
+        string name,
+        string? description,
+        string? category,
+        int price,
+        ProductStatus status,
+        int? initialQuantity = null,
+        int? safetyStock = null)
+    {
+        if (string.IsNullOrWhiteSpace(sku) || sku.Trim().Length > 32 || !SkuRegex().IsMatch(sku.Trim()))
+        {
+            return "SKU must be 1 to 32 characters and contain only letters, numbers, hyphens, or underscores.";
+        }
+
+        if (string.IsNullOrWhiteSpace(name) || name.Trim().Length > 100)
+        {
+            return "Name must be 1 to 100 characters.";
+        }
+
+        if (description?.Length > 1000)
+        {
+            return "Description must be 1000 characters or fewer.";
+        }
+
+        if (category?.Length > 50)
+        {
+            return "Category must be 50 characters or fewer.";
+        }
+
+        if (price < 0)
+        {
+            return "Price must be zero or greater.";
+        }
+
+        if (!Enum.IsDefined(status))
+        {
+            return "Status must be a defined product status.";
+        }
+
+        if (initialQuantity < 0)
+        {
+            return "Initial quantity must be zero or greater.";
+        }
+
+        if (safetyStock < 0)
+        {
+            return "Safety stock must be zero or greater.";
+        }
+
+        return null;
+    }
+
+    [System.Text.RegularExpressions.GeneratedRegex(@"^[A-Za-z0-9_-]{1,32}$")]
+    private static partial System.Text.RegularExpressions.Regex SkuRegex();
+
+    private Task<Product?> FindProductWithStockAsync(Guid id, CancellationToken cancellationToken) =>
+        dbContext.Products
+            .Include(product => product.Stock)
+            .FirstOrDefaultAsync(product => product.Id == id, cancellationToken);
+
+    private Task<bool> IsSkuInUseAsync(string sku, Guid? excludedProductId, CancellationToken cancellationToken) =>
+        dbContext.Products.AnyAsync(
+            product => product.Sku == sku && (!excludedProductId.HasValue || product.Id != excludedProductId.Value),
+            cancellationToken);
+
+    private static ProductDetailResponse ToDetailResponse(Product product) =>
+        new(
+            product.Id,
+            product.Sku,
+            product.Name,
+            product.Description,
+            product.Category,
+            product.Price,
+            product.Status,
+            product.Stock?.Quantity ?? 0,
+            product.Stock?.SafetyStock ?? 0,
+            product.CreatedAt,
+            product.UpdatedAt);
 }
