@@ -1,7 +1,9 @@
-using AspNetNextApp.Api.Contracts.Account;
+using AspNetNextApp.Api.Contracts.Auth;
+using AspNetNextApp.Api.Contracts.Users;
 using AspNetNextApp.Api.Controllers;
 using AspNetNextApp.Api.Entities;
 using AspNetNextApp.Api.Services.Accounts;
+using AspNetNextApp.Api.Tests.Controllers.Support;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,7 +12,7 @@ using Xunit;
 
 namespace AspNetNextApp.Api.Tests.Controllers
 {
-    public sealed class AccountControllerTests
+    public sealed class AuthControllerTests
     {
         [Fact]
         public async Task RegisterAsync_WhenServiceSucceedsReturnsCreatedUser()
@@ -25,13 +27,13 @@ namespace AspNetNextApp.Api.Tests.Controllers
             {
                 RegisterResult = AccountRegistrationResult.Success(user),
             };
-            AccountController controller = new(service);
+            AuthController controller = new(service);
             RegisterRequest request = new("user@example.com", "password123", "New User");
 
             ActionResult<AccountUserResponse> actionResult = await controller.RegisterAsync(request, CancellationToken.None);
 
             CreatedAtActionResult createdResult = Assert.IsType<CreatedAtActionResult>(actionResult.Result);
-            Assert.Equal(nameof(AccountController.GetMe), createdResult.ActionName);
+            Assert.Equal(nameof(ProfileController.GetMe), createdResult.ActionName);
             AccountUserResponse response = Assert.IsType<AccountUserResponse>(createdResult.Value);
             Assert.Equal(user.Id, response.Id);
             Assert.Equal(user.Email, response.Email);
@@ -50,7 +52,7 @@ namespace AspNetNextApp.Api.Tests.Controllers
             {
                 RegisterResult = AccountRegistrationResult.Failure(error),
             };
-            AccountController controller = new(service);
+            AuthController controller = new(service);
             RegisterRequest request = new("user@example.com", "password123", "New User");
 
             ActionResult<AccountUserResponse> actionResult = await controller.RegisterAsync(request, CancellationToken.None);
@@ -60,20 +62,21 @@ namespace AspNetNextApp.Api.Tests.Controllers
         }
 
         [Fact]
-        public void Controller_RequiresAuthenticatedUsersByDefault()
+        public void AuthController_RequiresAuthenticatedUsersByDefault()
         {
-            object attribute = Assert.Single(
-                typeof(AccountController).GetCustomAttributes(typeof(AuthorizeAttribute), inherit: true));
-
-            _ = Assert.IsType<AuthorizeAttribute>(attribute);
+            Assert.Contains(
+                typeof(AuthController).GetCustomAttributes(typeof(AuthorizeAttribute), inherit: true),
+                attribute => attribute is AuthorizeAttribute);
         }
 
         [Theory]
-        [InlineData(nameof(AccountController.RegisterAsync))]
-        [InlineData(nameof(AccountController.LoginAsync))]
-        public void AnonymousAccountEndpoints_AllowAnonymousUsers(string actionName)
+        [InlineData(nameof(AuthController.RegisterAsync))]
+        [InlineData(nameof(AuthController.LoginAsync))]
+        [InlineData(nameof(AuthController.RequestPasswordResetAsync))]
+        [InlineData(nameof(AuthController.ResetPasswordAsync))]
+        public void AnonymousAuthEndpoints_AllowAnonymousUsers(string actionName)
         {
-            System.Reflection.MethodInfo method = typeof(AccountController).GetMethods()
+            System.Reflection.MethodInfo method = typeof(AuthController).GetMethods()
                 .Single(method => method.Name == actionName);
 
             object attribute = Assert.Single(
@@ -82,52 +85,18 @@ namespace AspNetNextApp.Api.Tests.Controllers
             _ = Assert.IsType<AllowAnonymousAttribute>(attribute);
         }
 
-
         [Theory]
-        [InlineData(nameof(AccountController.LoginAsync), "login")]
-        [InlineData(nameof(AccountController.LogoutAsync), "logout")]
-        [InlineData(nameof(AccountController.GetMe), "me")]
-        public void AccountEndpoints_UseStandardRouteTemplates(string actionName, string routeTemplate)
+        [InlineData(nameof(AuthController.LoginAsync), "login")]
+        [InlineData(nameof(AuthController.LogoutAsync), "logout")]
+        public void AuthEndpoints_UseStandardRouteTemplates(string actionName, string routeTemplate)
         {
-            System.Reflection.MethodInfo method = typeof(AccountController).GetMethods()
+            System.Reflection.MethodInfo method = typeof(AuthController).GetMethods()
                 .Single(method => method.Name == actionName);
 
             HttpMethodAttribute attribute = Assert.Single(
                 method.GetCustomAttributes(typeof(HttpMethodAttribute), inherit: true).Cast<HttpMethodAttribute>());
 
             Assert.Equal(routeTemplate, attribute.Template);
-        }
-
-        private sealed class CapturingAccountAuthenticationService : IAccountAuthenticationService
-        {
-            public string? CapturedRegisterEmail { get; private set; }
-
-            public string? CapturedRegisterPassword { get; private set; }
-
-            public string? CapturedRegisterName { get; private set; }
-
-            public AccountRegistrationResult RegisterResult { get; init; } =
-                AccountRegistrationResult.Failure("Unexpected call.");
-
-            public Task<User?> AuthenticateAsync(
-                string email,
-                string password,
-                CancellationToken cancellationToken = default)
-            {
-                return Task.FromResult<User?>(null);
-            }
-
-            public Task<AccountRegistrationResult> RegisterAsync(
-                string email,
-                string password,
-                string name,
-                CancellationToken cancellationToken = default)
-            {
-                CapturedRegisterEmail = email;
-                CapturedRegisterPassword = password;
-                CapturedRegisterName = name;
-                return Task.FromResult(RegisterResult);
-            }
         }
     }
 }
