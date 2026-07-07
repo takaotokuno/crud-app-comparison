@@ -1,4 +1,3 @@
-﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -11,7 +10,7 @@ namespace AspNetNextApp.Api.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.CreateTable(
+            _ = migrationBuilder.CreateTable(
                 name: "Products",
                 columns: table => new
                 {
@@ -27,11 +26,11 @@ namespace AspNetNextApp.Api.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Products", x => x.Id);
-                    table.CheckConstraint("CK_Products_Price_NonNegative", "[Price] >= 0");
+                    _ = table.PrimaryKey("PK_Products", x => x.Id);
+                    _ = table.CheckConstraint("CK_Products_Price_NonNegative", "[Price] >= 0");
                 });
 
-            migrationBuilder.CreateTable(
+            _ = migrationBuilder.CreateTable(
                 name: "Users",
                 columns: table => new
                 {
@@ -45,10 +44,10 @@ namespace AspNetNextApp.Api.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Users", x => x.Id);
+                    _ = table.PrimaryKey("PK_Users", x => x.Id);
                 });
 
-            migrationBuilder.CreateTable(
+            _ = migrationBuilder.CreateTable(
                 name: "Stocks",
                 columns: table => new
                 {
@@ -61,10 +60,10 @@ namespace AspNetNextApp.Api.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Stocks", x => x.Id);
-                    table.CheckConstraint("CK_Stocks_Quantity_NonNegative", "[Quantity] >= 0");
-                    table.CheckConstraint("CK_Stocks_SafetyStock_NonNegative", "[SafetyStock] >= 0");
-                    table.ForeignKey(
+                    _ = table.PrimaryKey("PK_Stocks", x => x.Id);
+                    _ = table.CheckConstraint("CK_Stocks_Quantity_NonNegative", "[Quantity] >= 0");
+                    _ = table.CheckConstraint("CK_Stocks_SafetyStock_NonNegative", "[SafetyStock] >= 0");
+                    _ = table.ForeignKey(
                         name: "FK_Stocks_Products_ProductId",
                         column: x => x.ProductId,
                         principalTable: "Products",
@@ -72,7 +71,7 @@ namespace AspNetNextApp.Api.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
-            migrationBuilder.CreateTable(
+            _ = migrationBuilder.CreateTable(
                 name: "StockTransactions",
                 columns: table => new
                 {
@@ -88,22 +87,22 @@ namespace AspNetNextApp.Api.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_StockTransactions", x => x.Id);
-                    table.CheckConstraint("CK_StockTransactions_QuantityAfter_NonNegative", "[QuantityAfter] >= 0");
-                    table.CheckConstraint("CK_StockTransactions_QuantityDelta_NotZero", "[QuantityDelta] <> 0");
-                    table.ForeignKey(
+                    _ = table.PrimaryKey("PK_StockTransactions", x => x.Id);
+                    _ = table.CheckConstraint("CK_StockTransactions_QuantityAfter_NonNegative", "[QuantityAfter] >= 0");
+                    _ = table.CheckConstraint("CK_StockTransactions_QuantityDelta_NotZero", "[QuantityDelta] <> 0");
+                    _ = table.ForeignKey(
                         name: "FK_StockTransactions_Products_ProductId",
                         column: x => x.ProductId,
                         principalTable: "Products",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
+                    _ = table.ForeignKey(
                         name: "FK_StockTransactions_Stocks_StockId",
                         column: x => x.StockId,
                         principalTable: "Stocks",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
+                    _ = table.ForeignKey(
                         name: "FK_StockTransactions_Users_CreatedById",
                         column: x => x.CreatedById,
                         principalTable: "Users",
@@ -111,34 +110,34 @@ namespace AspNetNextApp.Api.Migrations
                         onDelete: ReferentialAction.SetNull);
                 });
 
-            migrationBuilder.CreateIndex(
+            _ = migrationBuilder.CreateIndex(
                 name: "IX_Products_Sku",
                 table: "Products",
                 column: "Sku",
                 unique: true);
 
-            migrationBuilder.CreateIndex(
+            _ = migrationBuilder.CreateIndex(
                 name: "IX_Stocks_ProductId",
                 table: "Stocks",
                 column: "ProductId",
                 unique: true);
 
-            migrationBuilder.CreateIndex(
+            _ = migrationBuilder.CreateIndex(
                 name: "IX_StockTransactions_CreatedById",
                 table: "StockTransactions",
                 column: "CreatedById");
 
-            migrationBuilder.CreateIndex(
+            _ = migrationBuilder.CreateIndex(
                 name: "IX_StockTransactions_ProductId",
                 table: "StockTransactions",
                 column: "ProductId");
 
-            migrationBuilder.CreateIndex(
+            _ = migrationBuilder.CreateIndex(
                 name: "IX_StockTransactions_StockId",
                 table: "StockTransactions",
                 column: "StockId");
 
-            migrationBuilder.CreateIndex(
+            _ = migrationBuilder.CreateIndex(
                 name: "IX_Users_Email",
                 table: "Users",
                 column: "Email",
@@ -148,16 +147,16 @@ namespace AspNetNextApp.Api.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
+            _ = migrationBuilder.DropTable(
                 name: "StockTransactions");
 
-            migrationBuilder.DropTable(
+            _ = migrationBuilder.DropTable(
                 name: "Stocks");
 
-            migrationBuilder.DropTable(
+            _ = migrationBuilder.DropTable(
                 name: "Users");
 
-            migrationBuilder.DropTable(
+            _ = migrationBuilder.DropTable(
                 name: "Products");
         }
     }

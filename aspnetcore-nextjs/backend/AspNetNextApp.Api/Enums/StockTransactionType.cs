@@ -1,8 +1,9 @@
-namespace AspNetNextApp.Api.Enums;
-
-public enum StockTransactionType
+namespace AspNetNextApp.Api.Enums
 {
-    Inbound,
-    Outbound,
-    Adjustment
+    public enum StockTransactionType
+    {
+        Inbound,
+        Outbound,
+        Adjustment
+    }
 }

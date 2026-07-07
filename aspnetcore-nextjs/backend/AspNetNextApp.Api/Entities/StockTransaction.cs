@@ -2,83 +2,84 @@ using System.ComponentModel.DataAnnotations;
 
 using AspNetNextApp.Api.Enums;
 
-namespace AspNetNextApp.Api.Entities;
-
-public sealed class StockTransaction : IValidatableObject
+namespace AspNetNextApp.Api.Entities
 {
-    public Guid Id { get; private set; } = Guid.NewGuid();
-
-    public Guid ProductId { get; private set; }
-
-    public Guid StockId { get; private set; }
-
-    public StockTransactionType Type { get; private set; }
-
-    public int QuantityDelta { get; private set; }
-
-    [Range(0, int.MaxValue)]
-    public int QuantityAfter { get; private set; }
-
-    [MaxLength(255)]
-    public string? Reason { get; private set; }
-
-    public Guid? CreatedById { get; private set; }
-
-    public DateTimeOffset CreatedAt { get; set; }
-
-    public Product Product { get; private set; } = null!;
-
-    public Stock Stock { get; private set; } = null!;
-
-    public User? CreatedBy { get; private set; }
-
-    private StockTransaction()
+    public sealed class StockTransaction : IValidatableObject
     {
-    }
+        public Guid Id { get; private set; } = Guid.NewGuid();
 
-    public static StockTransaction Create(
-        Stock stock,
-        StockTransactionType type,
-        int quantityDelta,
-        int quantityAfter,
-        string? reason = null,
-        Guid? createdById = null)
-    {
-        return new StockTransaction
+        public Guid ProductId { get; private set; }
+
+        public Guid StockId { get; private set; }
+
+        public StockTransactionType Type { get; private set; }
+
+        public int QuantityDelta { get; private set; }
+
+        [Range(0, int.MaxValue)]
+        public int QuantityAfter { get; private set; }
+
+        [MaxLength(255)]
+        public string? Reason { get; private set; }
+
+        public Guid? CreatedById { get; private set; }
+
+        public DateTimeOffset CreatedAt { get; set; }
+
+        public Product Product { get; private set; } = null!;
+
+        public Stock Stock { get; private set; } = null!;
+
+        public User? CreatedBy { get; private set; }
+
+        private StockTransaction()
         {
-            Product = stock.Product,
-            ProductId = stock.ProductId,
-            Stock = stock,
-            StockId = stock.Id,
-            Type = type,
-            QuantityDelta = quantityDelta,
-            QuantityAfter = quantityAfter,
-            Reason = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim(),
-            CreatedById = createdById,
-        };
-    }
-
-    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-    {
-        if (QuantityDelta == 0)
-        {
-            yield return new ValidationResult(
-                "Quantity delta must not be zero.",
-                [nameof(QuantityDelta)]);
         }
 
-        if (Type == StockTransactionType.Inbound && QuantityDelta < 0)
+        public static StockTransaction Create(
+            Stock stock,
+            StockTransactionType type,
+            int quantityDelta,
+            int quantityAfter,
+            string? reason = null,
+            Guid? createdById = null)
         {
-            yield return new ValidationResult(
-                "Inbound transactions must increase stock quantity.",
-                [nameof(QuantityDelta)]);
+            return new StockTransaction
+            {
+                Product = stock.Product,
+                ProductId = stock.ProductId,
+                Stock = stock,
+                StockId = stock.Id,
+                Type = type,
+                QuantityDelta = quantityDelta,
+                QuantityAfter = quantityAfter,
+                Reason = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim(),
+                CreatedById = createdById,
+            };
         }
 
-        if (Type == StockTransactionType.Outbound && QuantityDelta > 0)
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
-            yield return new ValidationResult(
-                "Outbound transactions must decrease stock quantity.",
-                [nameof(QuantityDelta)]);
+            if (QuantityDelta == 0)
+            {
+                yield return new ValidationResult(
+                    "Quantity delta must not be zero.",
+                    [nameof(QuantityDelta)]);
+            }
+
+            if (Type == StockTransactionType.Inbound && QuantityDelta < 0)
+            {
+                yield return new ValidationResult(
+                    "Inbound transactions must increase stock quantity.",
+                    [nameof(QuantityDelta)]);
+            }
+
+            if (Type == StockTransactionType.Outbound && QuantityDelta > 0)
+            {
+                yield return new ValidationResult(
+                    "Outbound transactions must decrease stock quantity.",
+                    [nameof(QuantityDelta)]);
+            }
         }
     }
 }

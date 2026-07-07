@@ -1,42 +1,43 @@
 using AspNetNextApp.Api.Services.Products;
 
-namespace AspNetNextApp.Api.Tests.Services.Products;
-
-public sealed class ProductServiceTests
+namespace AspNetNextApp.Api.Tests.Services.Products
 {
-    [Fact]
-    public async Task ListAsync_ReturnsEmptyPageUsingRequestedPaging()
+    public sealed class ProductServiceTests
     {
-        var service = new ProductService();
-        var query = new ListProductsQuery(
-            Query: null,
-            Status: null,
-            Category: null,
-            LowStock: null,
-            SortBy: null,
-            SortDirection: null,
-            Page: 3,
-            PageSize: 15);
+        [Fact]
+        public async Task ListAsync_ReturnsEmptyPageUsingRequestedPaging()
+        {
+            ProductService service = new ProductService();
+            ListProductsQuery query = new ListProductsQuery(
+                Query: null,
+                Status: null,
+                Category: null,
+                LowStock: null,
+                SortBy: null,
+                SortDirection: null,
+                Page: 3,
+                PageSize: 15);
 
-        var result = await service.ListAsync(query, CancellationToken.None);
+            ProductResult<Contracts.Products.ProductListResponse> result = await service.ListAsync(query, CancellationToken.None);
 
-        Assert.True(result.IsSuccess);
-        Assert.NotNull(result.Value);
-        Assert.Empty(result.Value.Items);
-        Assert.Equal(3, result.Value.Page);
-        Assert.Equal(15, result.Value.PageSize);
-        Assert.Equal(0, result.Value.TotalCount);
-    }
+            Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Value);
+            Assert.Empty(result.Value.Items);
+            Assert.Equal(3, result.Value.Page);
+            Assert.Equal(15, result.Value.PageSize);
+            Assert.Equal(0, result.Value.TotalCount);
+        }
 
-    [Fact]
-    public async Task GetAsync_ReturnsNotImplementedFailure()
-    {
-        var service = new ProductService();
+        [Fact]
+        public async Task GetAsync_ReturnsNotImplementedFailure()
+        {
+            ProductService service = new ProductService();
 
-        var result = await service.GetAsync(new GetProductQuery(Guid.NewGuid()), CancellationToken.None);
+            ProductResult<Contracts.Products.ProductDetailResponse> result = await service.GetAsync(new GetProductQuery(Guid.NewGuid()), CancellationToken.None);
 
-        Assert.False(result.IsSuccess);
-        Assert.Null(result.Value);
-        Assert.Equal("Not implemented.", result.Error);
+            Assert.False(result.IsSuccess);
+            Assert.Null(result.Value);
+            Assert.Equal("Not implemented.", result.Error);
+        }
     }
 }

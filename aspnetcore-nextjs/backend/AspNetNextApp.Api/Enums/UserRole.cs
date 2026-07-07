@@ -1,8 +1,9 @@
-namespace AspNetNextApp.Api.Enums;
-
-public enum UserRole
+namespace AspNetNextApp.Api.Enums
 {
-    Admin,
-    Staff,
-    Viewer
+    public enum UserRole
+    {
+        Admin,
+        Staff,
+        Viewer
+    }
 }

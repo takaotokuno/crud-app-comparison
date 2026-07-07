@@ -1,8 +1,9 @@
-namespace AspNetNextApp.Api.Enums;
-
-public enum ProductStatus
+namespace AspNetNextApp.Api.Enums
 {
-    Active,
-    Inactive,
-    Discontinued
+    public enum ProductStatus
+    {
+        Active,
+        Inactive,
+        Discontinued
+    }
 }

@@ -2,30 +2,31 @@ using System.ComponentModel.DataAnnotations;
 
 using AspNetNextApp.Api.Enums;
 
-namespace AspNetNextApp.Api.Entities;
-
-public sealed class User
+namespace AspNetNextApp.Api.Entities
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
+    public sealed class User
+    {
+        public Guid Id { get; set; } = Guid.NewGuid();
 
-    [Required]
-    [EmailAddress]
-    [MaxLength(255)]
-    public string Email { get; set; } = string.Empty;
+        [Required]
+        [EmailAddress]
+        [MaxLength(255)]
+        public string Email { get; set; } = string.Empty;
 
-    [Required]
-    [MaxLength(512)]
-    public string PasswordHash { get; set; } = string.Empty;
+        [Required]
+        [MaxLength(512)]
+        public string PasswordHash { get; set; } = string.Empty;
 
-    [Required]
-    [MaxLength(100)]
-    public string Name { get; set; } = string.Empty;
+        [Required]
+        [MaxLength(100)]
+        public string Name { get; set; } = string.Empty;
 
-    public UserRole Role { get; set; } = UserRole.Viewer;
+        public UserRole Role { get; set; } = UserRole.Viewer;
 
-    public DateTimeOffset CreatedAt { get; set; }
+        public DateTimeOffset CreatedAt { get; set; }
 
-    public DateTimeOffset UpdatedAt { get; set; }
+        public DateTimeOffset UpdatedAt { get; set; }
 
-    public ICollection<StockTransaction> StockTransactions { get; set; } = [];
+        public ICollection<StockTransaction> StockTransactions { get; set; } = [];
+    }
 }

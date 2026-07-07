@@ -9,84 +9,87 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace AspNetNextApp.Api.Controllers;
-
-[ApiController]
-[Route("api/account")]
-[Authorize]
-public sealed class AccountController(
-    IAccountAuthenticationService accountAuthenticationService) : ControllerBase
+namespace AspNetNextApp.Api.Controllers
 {
-    [HttpPost("login")]
-    [AllowAnonymous]
-    [ProducesResponseType(typeof(AccountUserResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult<AccountUserResponse>> LoginAsync(
-        [FromBody] LoginRequest request,
-        CancellationToken cancellationToken)
+    [ApiController]
+    [Route("api/account")]
+    [Authorize]
+    public sealed class AccountController(
+        IAccountAuthenticationService accountAuthenticationService) : ControllerBase
     {
-        var user = await accountAuthenticationService.AuthenticateAsync(
-            request.Email,
-            request.Password,
-            cancellationToken);
-
-        if (user is null)
+        [HttpPost("login")]
+        [AllowAnonymous]
+        [ProducesResponseType(typeof(AccountUserResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult<AccountUserResponse>> LoginAsync(
+            [FromBody] LoginRequest request,
+            CancellationToken cancellationToken)
         {
-            return Unauthorized(new { message = "Invalid email or password." });
-        }
+            User? user = await accountAuthenticationService.AuthenticateAsync(
+                request.Email,
+                request.Password,
+                cancellationToken);
 
-        var claims = new List<Claim>
-        {
-            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new(ClaimTypes.Email, user.Email),
-            new(ClaimTypes.Name, user.Name),
-            new(ClaimTypes.Role, user.Role.ToString()),
-        };
-
-        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-        var principal = new ClaimsPrincipal(identity);
-
-        await HttpContext.SignInAsync(
-            CookieAuthenticationDefaults.AuthenticationScheme,
-            principal,
-            new AuthenticationProperties
+            if (user is null)
             {
-                IsPersistent = true,
-                AllowRefresh = true,
-                ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8),
-            });
+                return Unauthorized(new { message = "Invalid email or password." });
+            }
 
-        return Ok(ToResponse(user));
-    }
+            List<Claim> claims = [
+                new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new(ClaimTypes.Email, user.Email),
+                new(ClaimTypes.Name, user.Name),
+                new(ClaimTypes.Role, user.Role.ToString()),
+            ];
 
-    [HttpPost("logout")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> LogoutAsync()
-    {
-        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-        return NoContent();
-    }
+            ClaimsIdentity identity = new(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            ClaimsPrincipal principal = new(identity);
 
-    [HttpGet("me")]
-    [ProducesResponseType(typeof(AccountUserResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public ActionResult<AccountUserResponse> GetMe()
-    {
-        var idValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var email = User.FindFirstValue(ClaimTypes.Email);
-        var name = User.FindFirstValue(ClaimTypes.Name);
-        var roleValue = User.FindFirstValue(ClaimTypes.Role);
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                principal,
+                new AuthenticationProperties
+                {
+                    IsPersistent = true,
+                    AllowRefresh = true,
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8),
+                });
 
-        if (!Guid.TryParse(idValue, out var id) || email is null || name is null || roleValue is null)
-        {
-            return Unauthorized(new { message = "Invalid authentication cookie." });
+            return Ok(ToResponse(user));
         }
 
-        return Enum.TryParse<UserRole>(roleValue, out var role)
-            ? Ok(new AccountUserResponse(id, email, name, role))
-            : Unauthorized(new { message = "Invalid authentication cookie." });
-    }
+        [HttpPost("logout")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> LogoutAsync()
+        {
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return NoContent();
+        }
 
-    private static AccountUserResponse ToResponse(User user) => new(user.Id, user.Email, user.Name, user.Role);
+        [HttpGet("me")]
+        [ProducesResponseType(typeof(AccountUserResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public ActionResult<AccountUserResponse> GetMe()
+        {
+            string? idValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            string? email = User.FindFirstValue(ClaimTypes.Email);
+            string? name = User.FindFirstValue(ClaimTypes.Name);
+            string? roleValue = User.FindFirstValue(ClaimTypes.Role);
+
+            if (!Guid.TryParse(idValue, out Guid id) || email is null || name is null || roleValue is null)
+            {
+                return Unauthorized(new { message = "Invalid authentication cookie." });
+            }
+
+            return Enum.TryParse(roleValue, out UserRole role)
+                ? Ok(new AccountUserResponse(id, email, name, role))
+                : Unauthorized(new { message = "Invalid authentication cookie." });
+        }
+
+        private static AccountUserResponse ToResponse(User user)
+        {
+            return new(user.Id, user.Email, user.Name, user.Role);
+        }
+    }
 }

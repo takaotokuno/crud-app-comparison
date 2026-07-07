@@ -3,32 +3,28 @@ using AspNetNextApp.Api.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
-namespace AspNetNextApp.Api.Services.Accounts;
-
-public sealed class AccountAuthenticationService(
-    AppDbContext dbContext,
-    IPasswordHasher<User> passwordHasher) : IAccountAuthenticationService
+namespace AspNetNextApp.Api.Services.Accounts
 {
-    public async Task<User?> AuthenticateAsync(
-        string email,
-        string password,
-        CancellationToken cancellationToken = default)
+    public sealed class AccountAuthenticationService(
+        AppDbContext dbContext,
+        IPasswordHasher<User> passwordHasher) : IAccountAuthenticationService
     {
-        var user = await dbContext.Users
-            .AsNoTracking()
-            .SingleOrDefaultAsync(candidate => candidate.Email == email, cancellationToken);
-
-        if (user is null || !IsValidPassword(user, password))
+        public async Task<User?> AuthenticateAsync(
+            string email,
+            string password,
+            CancellationToken cancellationToken = default)
         {
-            return null;
+            User? user = await dbContext.Users
+                .AsNoTracking()
+                .SingleOrDefaultAsync(candidate => candidate.Email == email, cancellationToken);
+
+            return user is null || !IsValidPassword(user, password) ? null : user;
         }
 
-        return user;
-    }
-
-    private bool IsValidPassword(User user, string password)
-    {
-        var result = passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password);
-        return result is PasswordVerificationResult.Success or PasswordVerificationResult.SuccessRehashNeeded;
+        private bool IsValidPassword(User user, string password)
+        {
+            PasswordVerificationResult result = passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password);
+            return result is PasswordVerificationResult.Success or PasswordVerificationResult.SuccessRehashNeeded;
+        }
     }
 }
