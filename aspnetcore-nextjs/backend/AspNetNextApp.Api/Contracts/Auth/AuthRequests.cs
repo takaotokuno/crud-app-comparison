@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace AspNetNextApp.Api.Contracts.Account
+namespace AspNetNextApp.Api.Contracts.Auth
 {
     public sealed record LoginRequest(
         [property: Required]
@@ -27,4 +27,21 @@ namespace AspNetNextApp.Api.Contracts.Account
         [property: Required]
         [property: MaxLength(100)]
         string Name);
+
+    public sealed record RequestPasswordResetRequest(
+        [property: Required]
+        [property: EmailAddress]
+        [property: MaxLength(255)]
+        string Email);
+
+    public sealed record ResetPasswordRequest(
+        [property: Required]
+        [property: EmailAddress]
+        [property: MaxLength(255)]
+        string Email,
+
+        [property: Required]
+        [property: MinLength(8)]
+        [property: MaxLength(200)]
+        string NewPassword);
 }

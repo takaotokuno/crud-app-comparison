@@ -1,8 +1,9 @@
 using System.Security.Claims;
 
-using AspNetNextApp.Api.Contracts.Account;
+using AspNetNextApp.Api.Contracts.Auth;
+using AspNetNextApp.Api.Contracts.Users;
+using AspNetNextApp.Api.Controllers.Shared;
 using AspNetNextApp.Api.Entities;
-using AspNetNextApp.Api.Enums;
 using AspNetNextApp.Api.Services.Accounts;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -14,7 +15,7 @@ namespace AspNetNextApp.Api.Controllers
     [ApiController]
     [Route("")]
     [Authorize]
-    public sealed class AccountController(
+    public sealed class AuthController(
         IAccountAuthenticationService accountAuthenticationService) : ControllerBase
     {
         [HttpPost("register")]
@@ -32,7 +33,7 @@ namespace AspNetNextApp.Api.Controllers
                 cancellationToken);
 
             return result.Succeeded && result.User is not null
-                ? CreatedAtAction(nameof(GetMe), ToResponse(result.User))
+                ? CreatedAtAction(nameof(ProfileController.GetMe), "Profile", null, ToResponse(result.User))
                 : Conflict(new { message = result.ErrorMessage });
         }
 
@@ -86,24 +87,27 @@ namespace AspNetNextApp.Api.Controllers
             return NoContent();
         }
 
-        [HttpGet("me")]
-        [ProducesResponseType(typeof(AccountUserResponse), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public ActionResult<AccountUserResponse> GetMe()
+        [HttpPost("password-reset/request")]
+        [AllowAnonymous]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        public async Task<IActionResult> RequestPasswordResetAsync(
+            [FromBody] RequestPasswordResetRequest request,
+            CancellationToken cancellationToken)
         {
-            string? idValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            string? email = User.FindFirstValue(ClaimTypes.Email);
-            string? name = User.FindFirstValue(ClaimTypes.Name);
-            string? roleValue = User.FindFirstValue(ClaimTypes.Role);
+            await accountAuthenticationService.RequestPasswordResetAsync(request.Email, cancellationToken);
+            return NoContent();
+        }
 
-            if (!Guid.TryParse(idValue, out Guid id) || email is null || name is null || roleValue is null)
-            {
-                return Unauthorized(new { message = "Invalid authentication cookie." });
-            }
-
-            return Enum.TryParse(roleValue, out UserRole role)
-                ? Ok(new AccountUserResponse(id, email, name, role))
-                : Unauthorized(new { message = "Invalid authentication cookie." });
+        [HttpPost("password-reset")]
+        [AllowAnonymous]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> ResetPasswordAsync(
+            [FromBody] ResetPasswordRequest request,
+            CancellationToken cancellationToken)
+        {
+            AccountResult<bool> result = await accountAuthenticationService.ResetPasswordAsync(request.Email, request.NewPassword, cancellationToken);
+            return AccountControllerResults.ToActionResult(this, result, NoContent());
         }
 
         private static AccountUserResponse ToResponse(User user)
