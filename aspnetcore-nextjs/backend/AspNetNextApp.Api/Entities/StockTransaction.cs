@@ -44,7 +44,7 @@ namespace AspNetNextApp.Api.Entities
             string? reason = null,
             Guid? createdById = null)
         {
-            return new StockTransaction
+            StockTransaction transaction = new()
             {
                 Product = stock.Product,
                 ProductId = stock.ProductId,
@@ -56,10 +56,20 @@ namespace AspNetNextApp.Api.Entities
                 Reason = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim(),
                 CreatedById = createdById,
             };
+            Validator.ValidateObject(transaction, new ValidationContext(transaction), validateAllProperties: true);
+
+            return transaction;
         }
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
+            if (!Enum.IsDefined(Type))
+            {
+                yield return new ValidationResult(
+                    "Type must be a defined stock transaction type.",
+                    [nameof(Type)]);
+            }
+
             if (QuantityDelta == 0)
             {
                 yield return new ValidationResult(

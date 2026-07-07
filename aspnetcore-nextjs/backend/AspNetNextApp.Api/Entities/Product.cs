@@ -53,6 +53,7 @@ namespace AspNetNextApp.Api.Entities
             Product product = new Product();
             product.UpdateDetails(sku, name, description, category, price, status);
             product.Stock = Stock.Create(product, initialQuantity, safetyStock);
+            product.EnsureValid();
 
             return product;
         }
@@ -71,6 +72,17 @@ namespace AspNetNextApp.Api.Entities
             Category = string.IsNullOrWhiteSpace(category) ? null : category.Trim();
             Price = price;
             Status = status;
+
+            EnsureValid();
+        }
+
+        private void EnsureValid()
+        {
+            Validator.ValidateObject(this, new ValidationContext(this), validateAllProperties: true);
+            if (!Enum.IsDefined(Status))
+            {
+                throw new ValidationException("Status must be a defined product status.");
+            }
         }
     }
 }

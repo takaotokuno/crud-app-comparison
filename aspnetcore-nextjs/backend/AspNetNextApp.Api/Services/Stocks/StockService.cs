@@ -59,12 +59,6 @@ namespace AspNetNextApp.Api.Services.Stocks
 
         public async Task<StockResult<StockDetailResponse>> CreateAsync(CreateStockCommand command, CancellationToken cancellationToken = default)
         {
-            string? validationError = ValidateStockInput(command.Quantity, command.SafetyStock, reason: null);
-            if (validationError is not null)
-            {
-                return StockResult<StockDetailResponse>.Failure(validationError);
-            }
-
             Product? product = await dbContext.Products
                 .Include(product => product.Stock)
                 .FirstOrDefaultAsync(product => product.Id == command.ProductId, cancellationToken);
@@ -87,12 +81,6 @@ namespace AspNetNextApp.Api.Services.Stocks
 
         public async Task<StockResult<StockDetailResponse>> UpdateAsync(UpdateStockCommand command, CancellationToken cancellationToken = default)
         {
-            string? validationError = ValidateStockInput(command.Quantity, command.SafetyStock, command.Reason);
-            if (validationError is not null)
-            {
-                return StockResult<StockDetailResponse>.Failure(validationError);
-            }
-
             Stock? stock = await FindStockAsync(command.Id, cancellationToken);
             if (stock is null)
             {
@@ -125,21 +113,6 @@ namespace AspNetNextApp.Api.Services.Stocks
                     ? stocks.OrderByDescending(stock => stock.UpdatedAt)
                     : stocks.OrderBy(stock => stock.UpdatedAt),
             };
-        }
-
-        private static string? ValidateStockInput(int quantity, int safetyStock, string? reason)
-        {
-            if (quantity < 0)
-            {
-                return "Quantity must be zero or greater.";
-            }
-
-            if (safetyStock < 0)
-            {
-                return "Safety stock must be zero or greater.";
-            }
-
-            return reason?.Length > 255 ? "Reason must be 255 characters or fewer." : null;
         }
 
         private Task<Stock?> FindStockAsync(Guid id, CancellationToken cancellationToken)

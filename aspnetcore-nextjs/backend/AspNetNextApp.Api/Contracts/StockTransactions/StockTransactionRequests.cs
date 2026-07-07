@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 using AspNetNextApp.Api.Enums;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,9 +14,11 @@ namespace AspNetNextApp.Api.Contracts.StockTransactions
         public StockTransactionType? Type { get; init; }
 
         [FromQuery]
+        [Range(1, int.MaxValue)]
         public int Page { get; init; } = 1;
 
         [FromQuery(Name = "page_size")]
+        [Range(1, 100)]
         public int PageSize { get; init; } = 20;
     }
 
@@ -22,5 +26,6 @@ namespace AspNetNextApp.Api.Contracts.StockTransactions
         Guid ProductId,
         StockTransactionType Type,
         int QuantityDelta,
+        [property: MaxLength(255)]
         string? Reason);
 }

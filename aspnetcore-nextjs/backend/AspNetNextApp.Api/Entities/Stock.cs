@@ -30,18 +30,22 @@ namespace AspNetNextApp.Api.Entities
 
         public static Stock Create(Product product, int initialQuantity, int safetyStock)
         {
-            return new Stock
+            Stock stock = new()
             {
                 Product = product,
                 ProductId = product.Id,
                 Quantity = initialQuantity,
                 SafetyStock = safetyStock,
             };
+            stock.EnsureValid();
+
+            return stock;
         }
 
         public void UpdateSafetyStock(int safetyStock)
         {
             SafetyStock = safetyStock;
+            EnsureValid();
         }
 
         public StockTransaction AdjustTo(int quantityAfter, string? reason = null, Guid? createdById = null)
@@ -52,10 +56,21 @@ namespace AspNetNextApp.Api.Entities
         public StockTransaction ApplyTransaction(StockTransactionType type, int quantityDelta, string? reason = null, Guid? createdById = null)
         {
             int quantityAfter = Quantity + quantityDelta;
+            if (quantityAfter < 0)
+            {
+                throw new ValidationException("Stock quantity must not become negative.");
+            }
+
             StockTransaction transaction = StockTransaction.Create(this, type, quantityDelta, quantityAfter, reason, createdById);
             Quantity = quantityAfter;
+            EnsureValid();
 
             return transaction;
+        }
+
+        private void EnsureValid()
+        {
+            Validator.ValidateObject(this, new ValidationContext(this), validateAllProperties: true);
         }
     }
 }
