@@ -17,6 +17,25 @@ namespace AspNetNextApp.Api.Controllers
     public sealed class AccountController(
         IAccountAuthenticationService accountAuthenticationService) : ControllerBase
     {
+        [HttpPost("register")]
+        [AllowAnonymous]
+        [ProducesResponseType(typeof(AccountUserResponse), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        public async Task<ActionResult<AccountUserResponse>> RegisterAsync(
+            [FromBody] RegisterRequest request,
+            CancellationToken cancellationToken)
+        {
+            AccountRegistrationResult result = await accountAuthenticationService.RegisterAsync(
+                request.Email,
+                request.Password,
+                request.Name,
+                cancellationToken);
+
+            return result.Succeeded && result.User is not null
+                ? CreatedAtAction(nameof(GetMe), ToResponse(result.User))
+                : Conflict(new { message = result.ErrorMessage });
+        }
+
         [HttpPost("login")]
         [AllowAnonymous]
         [ProducesResponseType(typeof(AccountUserResponse), StatusCodes.Status200OK)]
