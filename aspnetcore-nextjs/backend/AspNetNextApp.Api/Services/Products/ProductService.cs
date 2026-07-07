@@ -125,7 +125,7 @@ namespace AspNetNextApp.Api.Services.Products
                 return ProductResult<bool>.Failure("Product was not found.", ProductErrorType.NotFound);
             }
 
-            _ = dbContext.Products.Remove(product);
+            product.Discontinue();
             _ = await dbContext.SaveChangesAsync(cancellationToken);
 
             return ProductResult<bool>.Success(true);

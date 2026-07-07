@@ -1,4 +1,5 @@
 using AspNetNextApp.Api.Data;
+using AspNetNextApp.Api.Entities;
 using AspNetNextApp.Api.Enums;
 using AspNetNextApp.Api.Services.Products;
 using Microsoft.EntityFrameworkCore;
@@ -62,6 +63,39 @@ namespace AspNetNextApp.Api.Tests.Services.Products
             Assert.Equal(command.SafetyStock, result.Value.SafetyStock);
             Assert.Equal(1, await dbContext.Products.CountAsync());
             Assert.Equal(1, await dbContext.Stocks.CountAsync());
+        }
+
+        [Fact]
+        public async Task DeleteAsync_WhenProductExistsMarksProductDiscontinuedAndKeepsStockHistory()
+        {
+            await using AppDbContext dbContext = CreateDbContext();
+            Product product = Product.Create(
+                "SKU-DELETE",
+                "Delete Target",
+                null,
+                "Test",
+                1000,
+                ProductStatus.Active,
+                initialQuantity: 10,
+                safetyStock: 2);
+            dbContext.Products.Add(product);
+            await dbContext.SaveChangesAsync();
+
+            StockTransaction transaction = product.Stock!.ApplyTransaction(StockTransactionType.Inbound, 5, "restock");
+            dbContext.StockTransactions.Add(transaction);
+            await dbContext.SaveChangesAsync();
+            Guid productId = product.Id;
+            Guid stockId = product.Stock.Id;
+            ProductService service = new(dbContext);
+
+            ProductResult<bool> result = await service.DeleteAsync(new DeleteProductCommand(productId), CancellationToken.None);
+
+            Assert.True(result.IsSuccess);
+            Product? savedProduct = await dbContext.Products.FindAsync(productId);
+            Assert.NotNull(savedProduct);
+            Assert.Equal(ProductStatus.Discontinued, savedProduct.Status);
+            Assert.Equal(1, await dbContext.Stocks.CountAsync(stock => stock.Id == stockId));
+            Assert.Equal(1, await dbContext.StockTransactions.CountAsync(transaction => transaction.ProductId == productId));
         }
 
         [Fact]
