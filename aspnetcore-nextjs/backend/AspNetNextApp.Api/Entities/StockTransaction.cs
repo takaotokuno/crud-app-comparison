@@ -6,31 +6,57 @@ namespace AspNetNextApp.Api.Entities;
 
 public sealed class StockTransaction : IValidatableObject
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid Id { get; private set; } = Guid.NewGuid();
 
-    public Guid ProductId { get; set; }
+    public Guid ProductId { get; private set; }
 
-    public Guid StockId { get; set; }
+    public Guid StockId { get; private set; }
 
-    public StockTransactionType Type { get; set; }
+    public StockTransactionType Type { get; private set; }
 
-    public int QuantityDelta { get; set; }
+    public int QuantityDelta { get; private set; }
 
     [Range(0, int.MaxValue)]
-    public int QuantityAfter { get; set; }
+    public int QuantityAfter { get; private set; }
 
     [MaxLength(255)]
-    public string? Reason { get; set; }
+    public string? Reason { get; private set; }
 
-    public Guid? CreatedById { get; set; }
+    public Guid? CreatedById { get; private set; }
 
     public DateTimeOffset CreatedAt { get; set; }
 
-    public Product Product { get; set; } = null!;
+    public Product Product { get; private set; } = null!;
 
-    public Stock Stock { get; set; } = null!;
+    public Stock Stock { get; private set; } = null!;
 
-    public User? CreatedBy { get; set; }
+    public User? CreatedBy { get; private set; }
+
+    private StockTransaction()
+    {
+    }
+
+    public static StockTransaction Create(
+        Stock stock,
+        StockTransactionType type,
+        int quantityDelta,
+        int quantityAfter,
+        string? reason = null,
+        Guid? createdById = null)
+    {
+        return new StockTransaction
+        {
+            Product = stock.Product,
+            ProductId = stock.ProductId,
+            Stock = stock,
+            StockId = stock.Id,
+            Type = type,
+            QuantityDelta = quantityDelta,
+            QuantityAfter = quantityAfter,
+            Reason = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim(),
+            CreatedById = createdById,
+        };
+    }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
