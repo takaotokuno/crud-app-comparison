@@ -34,6 +34,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<IAccountAuthenticationService, AccountAuthenticationService>();
 builder.Services.AddScoped<AspNetNextApp.Api.Services.Products.IProductService, AspNetNextApp.Api.Services.Products.ProductService>();
+builder.Services.AddScoped<AspNetNextApp.Api.Services.Stocks.IStockService, AspNetNextApp.Api.Services.Stocks.StockService>();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
