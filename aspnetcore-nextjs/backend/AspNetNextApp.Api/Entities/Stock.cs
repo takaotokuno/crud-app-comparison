@@ -46,8 +46,13 @@ namespace AspNetNextApp.Api.Entities
 
         public StockTransaction AdjustTo(int quantityAfter, string? reason = null, Guid? createdById = null)
         {
-            int quantityDelta = quantityAfter - Quantity;
-            StockTransaction transaction = StockTransaction.Create(this, StockTransactionType.Adjustment, quantityDelta, quantityAfter, reason, createdById);
+            return ApplyTransaction(StockTransactionType.Adjustment, quantityAfter - Quantity, reason, createdById);
+        }
+
+        public StockTransaction ApplyTransaction(StockTransactionType type, int quantityDelta, string? reason = null, Guid? createdById = null)
+        {
+            int quantityAfter = Quantity + quantityDelta;
+            StockTransaction transaction = StockTransaction.Create(this, type, quantityDelta, quantityAfter, reason, createdById);
             Quantity = quantityAfter;
 
             return transaction;
