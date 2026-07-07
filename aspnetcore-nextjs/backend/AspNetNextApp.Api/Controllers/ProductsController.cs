@@ -1,16 +1,22 @@
+using AspNetNextApp.Api.Attribute;
 using AspNetNextApp.Api.Contracts.Products;
 using AspNetNextApp.Api.Enums;
 using AspNetNextApp.Api.Services.Products;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AspNetNextApp.Api.Controllers;
 
 [ApiController]
 [Route("api/products")]
+[Authorize]
 public sealed class ProductsController(IProductService productService) : ControllerBase
 {
     [HttpGet]
+    [UserRole(UserRole.Admin, UserRole.Staff, UserRole.Viewer)]
     [ProducesResponseType(typeof(ProductListResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<ProductListResponse>> ListAsync(
         [FromQuery] ListProductsRequest request,
         CancellationToken cancellationToken = default)
@@ -31,7 +37,10 @@ public sealed class ProductsController(IProductService productService) : Control
     }
 
     [HttpGet("{id:guid}")]
+    [UserRole(UserRole.Admin, UserRole.Staff, UserRole.Viewer)]
     [ProducesResponseType(typeof(ProductDetailResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ProductDetailResponse>> GetAsync(Guid id, CancellationToken cancellationToken)
     {
@@ -42,7 +51,10 @@ public sealed class ProductsController(IProductService productService) : Control
     }
 
     [HttpPost]
+    [UserRole(UserRole.Admin)]
     [ProducesResponseType(typeof(ProductDetailResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<ProductDetailResponse>> CreateAsync(
@@ -70,7 +82,10 @@ public sealed class ProductsController(IProductService productService) : Control
     }
 
     [HttpPut("{id:guid}")]
+    [UserRole(UserRole.Admin)]
     [ProducesResponseType(typeof(ProductDetailResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
@@ -94,7 +109,10 @@ public sealed class ProductsController(IProductService productService) : Control
     }
 
     [HttpDelete("{id:guid}")]
+    [UserRole(UserRole.Admin)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
