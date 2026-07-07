@@ -5,6 +5,7 @@ using AspNetNextApp.Api.Services.Products;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Xunit;
 
 namespace AspNetNextApp.Api.Tests.Controllers
 {

@@ -1,4 +1,5 @@
 using AspNetNextApp.Api.Services.Products;
+using Xunit;
 
 namespace AspNetNextApp.Api.Tests.Services.Products
 {
