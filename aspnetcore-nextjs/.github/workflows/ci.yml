@@ -2,6 +2,8 @@ name: CI
 
 on:
   pull_request:
+    branches:
+      - main
   push:
     branches:
       - main
@@ -24,7 +26,11 @@ jobs:
           dotnet-version: 9.0.x
 
       - name: Restore
-        run: dotnet restore
+        run: dotnet restore ../AspNetNextApp.sln
+
+      - name: Check dotnet format
+        working-directory: aspnetcore-nextjs/backend
+        run: dotnet format AspNetNextApp.sln --verify-no-changes --no-restore --verbosity diagnostic
 
       - name: Install dotnet-ef
         run: dotnet tool install --global dotnet-ef --version 9.*
