@@ -13,6 +13,7 @@ namespace AspNetNextApp.Api.Controllers;
 
 [ApiController]
 [Route("api/account")]
+[Authorize]
 public sealed class AccountController(
     IAccountAuthenticationService accountAuthenticationService) : ControllerBase
 {
@@ -59,8 +60,8 @@ public sealed class AccountController(
     }
 
     [HttpPost("logout")]
-    [Authorize]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> LogoutAsync()
     {
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
@@ -68,7 +69,6 @@ public sealed class AccountController(
     }
 
     [HttpGet("me")]
-    [Authorize]
     [ProducesResponseType(typeof(AccountUserResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public ActionResult<AccountUserResponse> GetMe()

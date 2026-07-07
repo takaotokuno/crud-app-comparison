@@ -1,7 +1,9 @@
+using AspNetNextApp.Api.Attribute;
 using AspNetNextApp.Api.Contracts.Products;
 using AspNetNextApp.Api.Controllers;
 using AspNetNextApp.Api.Entities;
 using AspNetNextApp.Api.Services.Products;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,15 +21,19 @@ public sealed class ProductsControllerTests
         };
         var controller = new ProductsController(service);
 
-        var actionResult = await controller.ListAsync(
-            query: "coffee",
-            status: ProductStatus.Active,
-            category: "Beverage",
-            lowStock: true,
-            sortBy: "name",
-            sortDirection: "desc",
-            page: 2,
-            pageSize: 10);
+        var request = new ListProductsRequest
+        {
+            Query = "coffee",
+            Status = ProductStatus.Active,
+            Category = "Beverage",
+            LowStock = true,
+            SortBy = "name",
+            SortDirection = "desc",
+            Page = 2,
+            PageSize = 10,
+        };
+
+        var actionResult = await controller.ListAsync(request, CancellationToken.None);
 
         var okResult = Assert.IsType<OkObjectResult>(actionResult.Result);
         Assert.Same(response, okResult.Value);
@@ -93,7 +99,7 @@ public sealed class ProductsControllerTests
     }
 
     [Fact]
-    public async Task GetAsync_WhenServiceFailsReturnsNotImplementedWithMessage()
+    public async Task GetAsync_WhenServiceFailsReturnsBadRequestWithMessage()
     {
         const string error = "Not implemented.";
         var service = new CapturingProductService
@@ -105,7 +111,7 @@ public sealed class ProductsControllerTests
         var actionResult = await controller.GetAsync(Guid.NewGuid(), CancellationToken.None);
 
         var objectResult = Assert.IsType<ObjectResult>(actionResult.Result);
-        Assert.Equal(StatusCodes.Status501NotImplemented, objectResult.StatusCode);
+        Assert.Equal(StatusCodes.Status400BadRequest, objectResult.StatusCode);
         Assert.Equal(error, objectResult.Value?.GetType().GetProperty("message")?.GetValue(objectResult.Value));
     }
 
@@ -121,6 +127,33 @@ public sealed class ProductsControllerTests
         var actionResult = await controller.DeleteAsync(Guid.NewGuid(), CancellationToken.None);
 
         Assert.IsType<NoContentResult>(actionResult);
+    }
+
+    [Fact]
+    public void Controller_RequiresAuthenticatedUsers()
+    {
+        var attribute = Assert.Single(
+            typeof(ProductsController).GetCustomAttributes(typeof(AuthorizeAttribute), inherit: true));
+
+        Assert.IsType<AuthorizeAttribute>(attribute);
+    }
+
+    [Theory]
+    [InlineData(nameof(ProductsController.ListAsync), "Admin,Staff,Viewer")]
+    [InlineData(nameof(ProductsController.GetAsync), "Admin,Staff,Viewer")]
+    [InlineData(nameof(ProductsController.CreateAsync), "Admin")]
+    [InlineData(nameof(ProductsController.UpdateAsync), "Admin")]
+    [InlineData(nameof(ProductsController.DeleteAsync), "Admin")]
+    public void ProductEndpoints_DeclareExpectedRoles(string actionName, string expectedRoles)
+    {
+        var method = typeof(ProductsController).GetMethods()
+            .Single(method => method.Name == actionName);
+
+        var attribute = Assert.Single(
+            method.GetCustomAttributes(typeof(UserRoleAttribute), inherit: true));
+        var roleAttribute = Assert.IsType<UserRoleAttribute>(attribute);
+
+        Assert.Equal(expectedRoles, roleAttribute.Roles);
     }
 
     private sealed class CapturingProductService : IProductService
