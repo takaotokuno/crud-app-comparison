@@ -11,6 +11,14 @@ indent_size = 2
 [*.{cs,csx}]
 indent_size = 4
 
+# Frontend formatting rules
+[*.{css,js,jsx,json,mjs,ts,tsx,yml,yaml}]
+indent_style = space
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
 # .NET formatting rules
 [*.cs]
 dotnet_sort_system_directives_first = true

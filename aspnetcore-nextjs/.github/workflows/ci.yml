@@ -32,6 +32,21 @@ jobs:
         working-directory: aspnetcore-nextjs/backend
         run: dotnet format AspNetNextApp.sln --verify-no-changes --no-restore --verbosity diagnostic
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: aspnetcore-nextjs/frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: aspnetcore-nextjs/frontend
+        run: npm ci
+
+      - name: Check frontend format
+        working-directory: aspnetcore-nextjs/frontend
+        run: npm run format:check
+
       - name: Install dotnet-ef
         run: dotnet tool install --global dotnet-ef --version 9.*
 
