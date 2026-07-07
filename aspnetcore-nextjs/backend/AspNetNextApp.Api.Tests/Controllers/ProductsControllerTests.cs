@@ -99,19 +99,19 @@ namespace AspNetNextApp.Api.Tests.Controllers
         }
 
         [Fact]
-        public async Task GetAsync_WhenServiceFailsReturnsBadRequestWithMessage()
+        public async Task GetAsync_WhenServiceReturnsNotFoundReturnsNotFoundWithMessage()
         {
-            const string error = "Not implemented.";
+            const string error = "Product was not found.";
             CapturingProductService service = new CapturingProductService
             {
-                GetResult = ProductResult<ProductDetailResponse>.Failure(error)
+                GetResult = ProductResult<ProductDetailResponse>.Failure(error, ProductErrorType.NotFound)
             };
             ProductsController controller = new ProductsController(service);
 
             ActionResult<ProductDetailResponse> actionResult = await controller.GetAsync(Guid.NewGuid(), CancellationToken.None);
 
             var objectResult = Assert.IsType<ObjectResult>(actionResult.Result);
-            Assert.Equal(StatusCodes.Status400BadRequest, objectResult.StatusCode);
+            Assert.Equal(StatusCodes.Status404NotFound, objectResult.StatusCode);
             Assert.Equal(error, objectResult.Value?.GetType().GetProperty("message")?.GetValue(objectResult.Value));
         }
 
