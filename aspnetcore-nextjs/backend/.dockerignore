@@ -1,0 +1,20 @@
+# .NET build outputs
+**/bin/
+**/obj/
+
+# User/local IDE files
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+# Git and Docker metadata
+.git/
+.gitignore
+.dockerignore
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
