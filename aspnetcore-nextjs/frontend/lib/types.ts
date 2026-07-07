@@ -1,5 +1,6 @@
 export type UserRole = 0 | 1 | 2;
 export type ProductStatus = 0 | 1 | 2;
+export type StockTransactionType = 0 | 1 | 2;
 
 export type AccountUser = {
   id: string;
@@ -64,4 +65,49 @@ export const roleLabels: Record<UserRole, string> = {
   0: "管理者",
   1: "在庫担当者",
   2: "閲覧者",
+};
+
+
+export type StockDetail = {
+  id: string;
+  productId: string;
+  productSku: string;
+  productName: string;
+  quantity: number;
+  safetyStock: number;
+  isLowStock: boolean;
+  createdAt?: string;
+  updatedAt: string;
+};
+
+export type StockListResponse = {
+  items: StockDetail[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+};
+
+export type StockTransaction = {
+  id: string;
+  productId: string;
+  stockId: string;
+  type: StockTransactionType;
+  quantityDelta: number;
+  quantityAfter: number;
+  reason: string | null;
+  createdById: string | null;
+  createdAt: string;
+};
+
+export type StockTransactionListResponse = {
+  items: StockTransaction[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+};
+
+export const transactionTypeLabels: Record<StockTransactionType, string> = {
+  0: "入庫",
+  1: "出庫",
+  2: "調整",
 };
