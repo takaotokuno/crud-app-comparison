@@ -3,6 +3,7 @@ using AspNetNextApp.Api.Controllers;
 using AspNetNextApp.Api.Enums;
 
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Routing;
 
 using Xunit;
 

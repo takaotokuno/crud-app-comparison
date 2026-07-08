@@ -7,6 +7,7 @@ using AspNetNextApp.Api.Tests.Controllers.Support;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Routing;
 
 using Xunit;
 
