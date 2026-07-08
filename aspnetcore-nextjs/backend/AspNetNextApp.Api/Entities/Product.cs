@@ -50,7 +50,7 @@ namespace AspNetNextApp.Api.Entities
             int initialQuantity,
             int safetyStock)
         {
-            Product product = new Product();
+            Product product = new();
             product.UpdateDetails(sku, name, description, category, price, status);
             product.Stock = Stock.Create(product, initialQuantity, safetyStock);
             product.EnsureValid();

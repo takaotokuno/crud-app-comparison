@@ -78,12 +78,12 @@ namespace AspNetNextApp.Api.Tests.Services.Products
                 ProductStatus.Active,
                 initialQuantity: 10,
                 safetyStock: 2);
-            dbContext.Products.Add(product);
-            await dbContext.SaveChangesAsync();
+            _ = dbContext.Products.Add(product);
+            _ = await dbContext.SaveChangesAsync();
 
             StockTransaction transaction = product.Stock!.ApplyTransaction(StockTransactionType.Inbound, 5, "restock");
-            dbContext.StockTransactions.Add(transaction);
-            await dbContext.SaveChangesAsync();
+            _ = dbContext.StockTransactions.Add(transaction);
+            _ = await dbContext.SaveChangesAsync();
             Guid productId = product.Id;
             Guid stockId = product.Stock.Id;
             ProductService service = new(dbContext);

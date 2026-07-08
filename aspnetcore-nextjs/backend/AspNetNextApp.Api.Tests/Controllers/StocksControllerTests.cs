@@ -115,9 +115,15 @@ namespace AspNetNextApp.Api.Tests.Controllers
                 return Task.FromResult(ListResult);
             }
 
-            public Task<StockResult<StockDetailResponse>> GetAsync(GetStockQuery query, CancellationToken cancellationToken = default) => Task.FromResult(GetResult);
+            public Task<StockResult<StockDetailResponse>> GetAsync(GetStockQuery query, CancellationToken cancellationToken = default)
+            {
+                return Task.FromResult(GetResult);
+            }
 
-            public Task<StockResult<StockDetailResponse>> CreateAsync(CreateStockCommand command, CancellationToken cancellationToken = default) => Task.FromResult(CreateResult);
+            public Task<StockResult<StockDetailResponse>> CreateAsync(CreateStockCommand command, CancellationToken cancellationToken = default)
+            {
+                return Task.FromResult(CreateResult);
+            }
 
             public Task<StockResult<StockDetailResponse>> UpdateAsync(UpdateStockCommand command, CancellationToken cancellationToken = default)
             {

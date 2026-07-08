@@ -1,7 +1,6 @@
 using AspNetNextApp.Api.Contracts.Products;
 using AspNetNextApp.Api.Data;
 using AspNetNextApp.Api.Entities;
-using AspNetNextApp.Api.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace AspNetNextApp.Api.Services.Products
