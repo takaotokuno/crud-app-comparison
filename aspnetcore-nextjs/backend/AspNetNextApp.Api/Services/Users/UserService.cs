@@ -2,40 +2,27 @@ using AspNetNextApp.Api.Contracts.Users;
 using AspNetNextApp.Api.Data;
 using AspNetNextApp.Api.Entities;
 using AspNetNextApp.Api.Enums;
+using AspNetNextApp.Api.Services.Accounts;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
-namespace AspNetNextApp.Api.Services.Accounts
+namespace AspNetNextApp.Api.Services.Users
 {
-    public sealed class AccountAuthenticationService(
+    public sealed class UserService(
         AppDbContext dbContext,
-        IPasswordHasher<User> passwordHasher) : IAccountAuthenticationService
+        IPasswordHasher<User> passwordHasher) : IUserService
     {
         private const int MaxPageSize = 100;
 
-        public async Task<User?> AuthenticateAsync(
-            string email,
-            string password,
-            CancellationToken cancellationToken = default)
-        {
-            User? user = await dbContext.Users
-                .AsNoTracking()
-                .SingleOrDefaultAsync(candidate => candidate.Email == email, cancellationToken);
-
-            return user is null || !IsValidPassword(user, password) ? null : user;
-        }
-
-        public async Task<AccountRegistrationResult> RegisterAsync(
+        public async Task<AccountResult<User>> CreateUserAsync(
             string email,
             string password,
             string name,
             CancellationToken cancellationToken = default)
         {
-            bool emailExists = await IsEmailInUseAsync(email, excludedUserId: null, cancellationToken);
-
-            if (emailExists)
+            if (await IsEmailInUseAsync(email, excludedUserId: null, cancellationToken))
             {
-                return AccountRegistrationResult.Failure("Email is already registered.");
+                return AccountResult<User>.Failure("Email is already registered.", AccountErrorType.Conflict);
             }
 
             User user = new()
@@ -53,28 +40,10 @@ namespace AspNetNextApp.Api.Services.Accounts
             }
             catch (DbUpdateException)
             {
-                return AccountRegistrationResult.Failure("Email is already registered.");
+                return AccountResult<User>.Failure("Email is already registered.", AccountErrorType.Conflict);
             }
 
-            return AccountRegistrationResult.Success(user);
-        }
-
-        public Task RequestPasswordResetAsync(string email, CancellationToken cancellationToken = default)
-        {
-            return dbContext.Users.AsNoTracking().AnyAsync(user => user.Email == email, cancellationToken);
-        }
-
-        public async Task<AccountResult<bool>> ResetPasswordAsync(string email, string newPassword, CancellationToken cancellationToken = default)
-        {
-            User? user = await dbContext.Users.SingleOrDefaultAsync(candidate => candidate.Email == email, cancellationToken);
-            if (user is null)
-            {
-                return AccountResult<bool>.Failure("User was not found.", AccountErrorType.NotFound);
-            }
-
-            user.PasswordHash = passwordHasher.HashPassword(user, newPassword);
-            _ = await dbContext.SaveChangesAsync(cancellationToken);
-            return AccountResult<bool>.Success(true);
+            return AccountResult<User>.Success(user);
         }
 
         public async Task<AccountResult<AccountUserListResponse>> ListUsersAsync(int page, int pageSize, CancellationToken cancellationToken = default)
@@ -139,43 +108,7 @@ namespace AspNetNextApp.Api.Services.Accounts
             return AccountResult<bool>.Success(true);
         }
 
-        public Task<AccountResult<AccountUserResponse>> ChangeUserRoleAsync(Guid id, UserRole role, CancellationToken cancellationToken = default)
-        {
-            return UpdateRoleAsync(id, role, cancellationToken);
-        }
-
-        public async Task<AccountResult<AccountUserResponse>> UpdateProfileAsync(Guid id, string name, CancellationToken cancellationToken = default)
-        {
-            User? user = await dbContext.Users.SingleOrDefaultAsync(candidate => candidate.Id == id, cancellationToken);
-            if (user is null)
-            {
-                return AccountResult<AccountUserResponse>.Failure("User was not found.", AccountErrorType.NotFound);
-            }
-
-            user.Name = name;
-            _ = await dbContext.SaveChangesAsync(cancellationToken);
-            return AccountResult<AccountUserResponse>.Success(ToResponse(user));
-        }
-
-        public async Task<AccountResult<bool>> ChangePasswordAsync(Guid id, string currentPassword, string newPassword, CancellationToken cancellationToken = default)
-        {
-            User? user = await dbContext.Users.SingleOrDefaultAsync(candidate => candidate.Id == id, cancellationToken);
-            if (user is null)
-            {
-                return AccountResult<bool>.Failure("User was not found.", AccountErrorType.NotFound);
-            }
-
-            if (!IsValidPassword(user, currentPassword))
-            {
-                return AccountResult<bool>.Failure("Current password is invalid.", AccountErrorType.Unauthorized);
-            }
-
-            user.PasswordHash = passwordHasher.HashPassword(user, newPassword);
-            _ = await dbContext.SaveChangesAsync(cancellationToken);
-            return AccountResult<bool>.Success(true);
-        }
-
-        private async Task<AccountResult<AccountUserResponse>> UpdateRoleAsync(Guid id, UserRole role, CancellationToken cancellationToken)
+        public async Task<AccountResult<AccountUserResponse>> ChangeUserRoleAsync(Guid id, UserRole role, CancellationToken cancellationToken = default)
         {
             User? user = await dbContext.Users.SingleOrDefaultAsync(candidate => candidate.Id == id, cancellationToken);
             if (user is null)
@@ -188,17 +121,11 @@ namespace AspNetNextApp.Api.Services.Accounts
             return AccountResult<AccountUserResponse>.Success(ToResponse(user));
         }
 
-        private Task<bool> IsEmailInUseAsync(string email, Guid? excludedUserId, CancellationToken cancellationToken)
+        public Task<bool> IsEmailInUseAsync(string email, Guid? excludedUserId, CancellationToken cancellationToken = default)
         {
             return dbContext.Users.AnyAsync(
                 user => user.Email == email && (!excludedUserId.HasValue || user.Id != excludedUserId.Value),
                 cancellationToken);
-        }
-
-        private bool IsValidPassword(User user, string password)
-        {
-            PasswordVerificationResult result = passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password);
-            return result is PasswordVerificationResult.Success or PasswordVerificationResult.SuccessRehashNeeded;
         }
 
         private static AccountUserResponse ToResponse(User user)

@@ -5,6 +5,8 @@ using AspNetNextApp.Api.Contracts.Users;
 using AspNetNextApp.Api.Controllers.Shared;
 using AspNetNextApp.Api.Enums;
 using AspNetNextApp.Api.Services.Accounts;
+using AspNetNextApp.Api.Services.Profile;
+using AspNetNextApp.Api.Services.Tokens;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,7 +15,9 @@ namespace AspNetNextApp.Api.Controllers
     [ApiController]
     [Route("")]
     [Authorize]
-    public sealed class ProfileController(IAccountAuthenticationService accountAuthenticationService) : ControllerBase
+    public sealed class ProfileController(
+        IProfileService profileService,
+        ITokenService tokenService) : ControllerBase
     {
         [HttpGet("me")]
         [ProducesResponseType(typeof(AccountUserResponse), StatusCodes.Status200OK)]
@@ -48,7 +52,7 @@ namespace AspNetNextApp.Api.Controllers
                 return Unauthorized(new { message = "Invalid authentication cookie." });
             }
 
-            AccountResult<AccountUserResponse> result = await accountAuthenticationService.UpdateProfileAsync(id, request.Name, cancellationToken);
+            AccountResult<AccountUserResponse> result = await profileService.UpdateProfileAsync(id, request.Name, cancellationToken);
             return AccountControllerResults.ToActionResult(this, result);
         }
 
@@ -65,13 +69,13 @@ namespace AspNetNextApp.Api.Controllers
                 return Unauthorized(new { message = "Invalid authentication cookie." });
             }
 
-            AccountResult<bool> result = await accountAuthenticationService.ChangePasswordAsync(id, request.CurrentPassword, request.NewPassword, cancellationToken);
+            AccountResult<bool> result = await profileService.ChangePasswordAsync(id, request.CurrentPassword, request.NewPassword, cancellationToken);
             return AccountControllerResults.ToActionResult(this, result, NoContent());
         }
 
         private bool TryGetCurrentUserId(out Guid id)
         {
-            return Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out id);
+            return tokenService.TryValidateToken(User, out id);
         }
     }
 }
