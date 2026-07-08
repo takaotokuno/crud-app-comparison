@@ -3,6 +3,7 @@ using AspNetNextApp.Api.Contracts.Users;
 using AspNetNextApp.Api.Controllers.Shared;
 using AspNetNextApp.Api.Enums;
 using AspNetNextApp.Api.Services.Accounts;
+using AspNetNextApp.Api.Services.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,7 +13,7 @@ namespace AspNetNextApp.Api.Controllers
     [Route("users")]
     [Authorize]
     [UserRole(UserRole.Admin)]
-    public sealed class UsersController(IAccountAuthenticationService accountAuthenticationService) : ControllerBase
+    public sealed class UsersController(IUserService userService) : ControllerBase
     {
         [HttpGet]
         [ProducesResponseType(typeof(AccountUserListResponse), StatusCodes.Status200OK)]
@@ -23,7 +24,7 @@ namespace AspNetNextApp.Api.Controllers
             [FromQuery(Name = "page_size")] int pageSize = 20,
             CancellationToken cancellationToken = default)
         {
-            AccountResult<AccountUserListResponse> result = await accountAuthenticationService.ListUsersAsync(page, pageSize, cancellationToken);
+            AccountResult<AccountUserListResponse> result = await userService.ListUsersAsync(page, pageSize, cancellationToken);
             return AccountControllerResults.ToActionResult(this, result);
         }
 
@@ -34,7 +35,7 @@ namespace AspNetNextApp.Api.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<AccountUserResponse>> GetAsync(Guid id, CancellationToken cancellationToken)
         {
-            AccountResult<AccountUserResponse> result = await accountAuthenticationService.GetUserAsync(id, cancellationToken);
+            AccountResult<AccountUserResponse> result = await userService.GetUserAsync(id, cancellationToken);
             return AccountControllerResults.ToActionResult(this, result);
         }
 
@@ -49,7 +50,7 @@ namespace AspNetNextApp.Api.Controllers
             [FromBody] UpdateUserRequest request,
             CancellationToken cancellationToken)
         {
-            AccountResult<AccountUserResponse> result = await accountAuthenticationService.UpdateUserAsync(
+            AccountResult<AccountUserResponse> result = await userService.UpdateUserAsync(
                 id,
                 request.Email,
                 request.Name,
@@ -66,7 +67,7 @@ namespace AspNetNextApp.Api.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> DeleteAsync(Guid id, CancellationToken cancellationToken)
         {
-            AccountResult<bool> result = await accountAuthenticationService.DeleteUserAsync(id, cancellationToken);
+            AccountResult<bool> result = await userService.DeleteUserAsync(id, cancellationToken);
             return AccountControllerResults.ToActionResult(this, result, NoContent());
         }
 
@@ -80,7 +81,7 @@ namespace AspNetNextApp.Api.Controllers
             [FromBody] ChangeUserRoleRequest request,
             CancellationToken cancellationToken)
         {
-            AccountResult<AccountUserResponse> result = await accountAuthenticationService.ChangeUserRoleAsync(id, request.Role, cancellationToken);
+            AccountResult<AccountUserResponse> result = await userService.ChangeUserRoleAsync(id, request.Role, cancellationToken);
             return AccountControllerResults.ToActionResult(this, result);
         }
     }

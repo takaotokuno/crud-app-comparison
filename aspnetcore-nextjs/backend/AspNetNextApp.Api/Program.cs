@@ -1,6 +1,9 @@
 using AspNetNextApp.Api.Data;
 using AspNetNextApp.Api.Entities;
-using AspNetNextApp.Api.Services.Accounts;
+using AspNetNextApp.Api.Services.Auth;
+using AspNetNextApp.Api.Services.Profile;
+using AspNetNextApp.Api.Services.Tokens;
+using AspNetNextApp.Api.Services.Users;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -32,7 +35,10 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     });
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
-builder.Services.AddScoped<IAccountAuthenticationService, AccountAuthenticationService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<AspNetNextApp.Api.Services.Products.IProductService, AspNetNextApp.Api.Services.Products.ProductService>();
 builder.Services.AddScoped<AspNetNextApp.Api.Services.StockTransactions.IStockTransactionService, AspNetNextApp.Api.Services.StockTransactions.StockTransactionService>();
 builder.Services.AddScoped<AspNetNextApp.Api.Services.Stocks.IStockService, AspNetNextApp.Api.Services.Stocks.StockService>();

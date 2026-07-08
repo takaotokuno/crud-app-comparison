@@ -1,12 +1,11 @@
-using System.Security.Claims;
-
 using AspNetNextApp.Api.Contracts.Auth;
 using AspNetNextApp.Api.Contracts.Users;
 using AspNetNextApp.Api.Controllers.Shared;
 using AspNetNextApp.Api.Entities;
 using AspNetNextApp.Api.Services.Accounts;
+using AspNetNextApp.Api.Services.Auth;
+using AspNetNextApp.Api.Services.Tokens;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,7 +15,8 @@ namespace AspNetNextApp.Api.Controllers
     [Route("")]
     [Authorize]
     public sealed class AuthController(
-        IAccountAuthenticationService accountAuthenticationService) : ControllerBase
+        IAuthService authService,
+        ITokenService tokenService) : ControllerBase
     {
         [HttpPost("register")]
         [AllowAnonymous]
@@ -26,7 +26,7 @@ namespace AspNetNextApp.Api.Controllers
             [FromBody] RegisterRequest request,
             CancellationToken cancellationToken)
         {
-            AccountRegistrationResult result = await accountAuthenticationService.RegisterAsync(
+            AccountRegistrationResult result = await authService.RegisterAsync(
                 request.Email,
                 request.Password,
                 request.Name,
@@ -45,7 +45,7 @@ namespace AspNetNextApp.Api.Controllers
             [FromBody] LoginRequest request,
             CancellationToken cancellationToken)
         {
-            User? user = await accountAuthenticationService.AuthenticateAsync(
+            User? user = await authService.LoginAsync(
                 request.Email,
                 request.Password,
                 cancellationToken);
@@ -55,25 +55,9 @@ namespace AspNetNextApp.Api.Controllers
                 return Unauthorized(new { message = "Invalid email or password." });
             }
 
-            List<Claim> claims = [
-                new(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new(ClaimTypes.Email, user.Email),
-                new(ClaimTypes.Name, user.Name),
-                new(ClaimTypes.Role, user.Role.ToString()),
-            ];
-
-            ClaimsIdentity identity = new(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            ClaimsPrincipal principal = new(identity);
-
             await HttpContext.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme,
-                principal,
-                new AuthenticationProperties
-                {
-                    IsPersistent = true,
-                    AllowRefresh = true,
-                    ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8),
-                });
+                tokenService.CreateAccessToken(user),
+                tokenService.CreateRefreshToken());
 
             return Ok(ToResponse(user));
         }
@@ -83,7 +67,8 @@ namespace AspNetNextApp.Api.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> LogoutAsync()
         {
-            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            await authService.LogoutAsync();
+            await HttpContext.SignOutAsync();
             return NoContent();
         }
 
@@ -94,7 +79,7 @@ namespace AspNetNextApp.Api.Controllers
             [FromBody] RequestPasswordResetRequest request,
             CancellationToken cancellationToken)
         {
-            await accountAuthenticationService.RequestPasswordResetAsync(request.Email, cancellationToken);
+            await authService.RequestPasswordResetAsync(request.Email, cancellationToken);
             return NoContent();
         }
 
@@ -106,7 +91,7 @@ namespace AspNetNextApp.Api.Controllers
             [FromBody] ResetPasswordRequest request,
             CancellationToken cancellationToken)
         {
-            AccountResult<bool> result = await accountAuthenticationService.ResetPasswordAsync(request.Email, request.NewPassword, cancellationToken);
+            AccountResult<bool> result = await authService.ResetPasswordAsync(request.Email, request.NewPassword, cancellationToken);
             return AccountControllerResults.ToActionResult(this, result, NoContent());
         }
 

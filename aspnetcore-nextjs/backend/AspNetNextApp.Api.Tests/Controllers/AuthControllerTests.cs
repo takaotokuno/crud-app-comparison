@@ -23,11 +23,11 @@ namespace AspNetNextApp.Api.Tests.Controllers
                 Email = "user@example.com",
                 Name = "New User",
             };
-            CapturingAccountAuthenticationService service = new()
+            CapturingAuthService service = new()
             {
                 RegisterResult = AccountRegistrationResult.Success(user),
             };
-            AuthController controller = new(service);
+            AuthController controller = new(service, new FakeTokenService());
             RegisterRequest request = new("user@example.com", "password123", "New User");
 
             ActionResult<AccountUserResponse> actionResult = await controller.RegisterAsync(request, CancellationToken.None);
@@ -48,11 +48,11 @@ namespace AspNetNextApp.Api.Tests.Controllers
         public async Task RegisterAsync_WhenEmailAlreadyExistsReturnsConflictWithMessage()
         {
             const string error = "Email is already registered.";
-            CapturingAccountAuthenticationService service = new()
+            CapturingAuthService service = new()
             {
                 RegisterResult = AccountRegistrationResult.Failure(error),
             };
-            AuthController controller = new(service);
+            AuthController controller = new(service, new FakeTokenService());
             RegisterRequest request = new("user@example.com", "password123", "New User");
 
             ActionResult<AccountUserResponse> actionResult = await controller.RegisterAsync(request, CancellationToken.None);
