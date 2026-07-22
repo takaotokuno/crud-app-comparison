@@ -5,5 +5,6 @@
 | ファイル | 内容 |
 | --- | --- |
 | [要件定義](./product-inventory-crud-requirements.md) | ログイン、商品、在庫、在庫取引、画面、API、バリデーション、初期データ、テスト要件。 |
+| [画面遷移図・画面レイアウト](./screen-flow-and-layout.md) | 共通画面の遷移、主要画面のワイヤーフレーム、権限別の導線。 |
 | [比較時に記録する観点](./comparison-checkpoints.md) | 各構成を実装した後に比較・記録する項目。 |
 | [実装メモのテンプレート](./implementation-note-template.md) | 各実装フォルダに配置する実装メモのひな形。 |
