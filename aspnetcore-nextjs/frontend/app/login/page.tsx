@@ -21,8 +21,10 @@ export default function LoginPage() {
       await requestJson<AccountUser>("/api/login", {
         method: "POST",
         body: JSON.stringify({ email, password }),
+        redirectOnUnauthorized: false,
       });
-      router.push("/products");
+      const returnTo = new URLSearchParams(window.location.search).get("returnTo");
+      router.push(returnTo?.startsWith("/") && !returnTo.startsWith("//") ? returnTo : "/products");
       router.refresh();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "ログインに失敗しました。");
