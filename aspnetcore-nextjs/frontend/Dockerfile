@@ -8,6 +8,8 @@ RUN npm ci
 FROM node:22-bookworm AS build
 WORKDIR /app
 
+ARG API_BASE_URL
+ENV API_BASE_URL=${API_BASE_URL}
 ENV NEXT_TELEMETRY_DISABLED=1
 
 COPY --from=deps /app/node_modules ./node_modules

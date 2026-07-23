@@ -4,6 +4,10 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 First, run the development server:
 
+The required backend URL is configured in `.env` as `API_BASE_URL`. The application validates
+this value when Next.js loads its configuration and exits immediately if it is missing or is not
+an HTTP(S) URL.
+
 ```bash
 npm run dev
 # or

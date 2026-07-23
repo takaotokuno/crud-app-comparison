@@ -1,33 +1,32 @@
 import type { NextConfig } from "next";
-
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5000";
+import { env } from "./env";
 
 const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
         source: "/api/login",
-        destination: `${apiBaseUrl}/login`,
+        destination: `${env.API_BASE_URL}/login`,
       },
       {
         source: "/api/logout",
-        destination: `${apiBaseUrl}/logout`,
+        destination: `${env.API_BASE_URL}/logout`,
       },
       {
         source: "/api/me",
-        destination: `${apiBaseUrl}/me`,
+        destination: `${env.API_BASE_URL}/me`,
       },
       {
         source: "/api/products/:path*",
-        destination: `${apiBaseUrl}/products/:path*`,
+        destination: `${env.API_BASE_URL}/products/:path*`,
       },
       {
         source: "/api/stocks/:path*",
-        destination: `${apiBaseUrl}/api/stocks/:path*`,
+        destination: `${env.API_BASE_URL}/api/stocks/:path*`,
       },
       {
         source: "/api/stock-transactions/:path*",
-        destination: `${apiBaseUrl}/api/stock-transactions/:path*`,
+        destination: `${env.API_BASE_URL}/api/stock-transactions/:path*`,
       },
     ];
   },
