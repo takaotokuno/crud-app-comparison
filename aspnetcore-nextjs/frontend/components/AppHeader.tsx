@@ -1,5 +1,6 @@
 "use client";
 
+import { Alert, Box, Button, Container, Group, Stack, Text, Title } from "@mantine/core";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -12,9 +13,7 @@ export function AppHeader() {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    requestJson<AccountUser>("/api/me")
-      .then(setUser)
-      .catch(() => setUser(null));
+    requestJson<AccountUser>("/api/me").then(setUser).catch(() => setUser(null));
   }, []);
 
   async function logout() {
@@ -28,38 +27,35 @@ export function AppHeader() {
   }
 
   return (
-    <header className="border-b border-slate-200 bg-white">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-sm text-slate-500">ASP.NET Core Web API + Next.js</p>
-          <Link className="text-2xl font-semibold text-slate-950" href="/products">
-            商品在庫管理
-          </Link>
-        </div>
-        <nav className="flex flex-wrap items-center gap-3 text-sm">
-          <Link className="rounded border border-slate-300 px-3 py-2" href="/products">
-            商品一覧
-          </Link>
-          <Link className="rounded bg-slate-900 px-3 py-2 text-white" href="/products/new">
-            新規登録
-          </Link>
-          {user ? (
-            <>
-              <span className="text-slate-600">
-                {user.name}（{roleLabels[user.role]}）
-              </span>
-              <button className="rounded border border-slate-300 px-3 py-2" onClick={logout}>
-                ログアウト
-              </button>
-            </>
-          ) : (
-            <Link className="rounded border border-slate-300 px-3 py-2" href="/login">
-              ログイン
-            </Link>
-          )}
-        </nav>
-      </div>
-      {message && <p className="mx-auto max-w-6xl px-6 pb-3 text-sm text-red-600">{message}</p>}
-    </header>
+    <Box component="header" bg="white" style={{ borderBottom: "1px solid var(--mantine-color-gray-3)" }}>
+      <Container size="lg" py="md">
+        <Group justify="space-between" align="center" wrap="wrap">
+          <Stack gap={0}>
+            <Text c="dimmed" size="xs">ASP.NET Core Web API + Next.js</Text>
+            <Title component={Link} href="/products" order={2} td="none" c="dark">
+              商品在庫管理
+            </Title>
+          </Stack>
+          <Group component="nav" gap="sm" wrap="wrap">
+            <Button component={Link} href="/products" variant="default">商品一覧</Button>
+            {user?.role !== 2 && (
+              <Button component={Link} href="/products/new">新規登録</Button>
+            )}
+            {user?.role === 0 && (
+              <Button variant="default" disabled>ユーザー管理（準備中）</Button>
+            )}
+            {user ? (
+              <>
+                <Text size="sm">{roleLabels[user.role]}／{user.name}</Text>
+                <Button variant="default" onClick={logout}>ログアウト</Button>
+              </>
+            ) : (
+              <Button component={Link} href="/login" variant="default">ログイン</Button>
+            )}
+          </Group>
+        </Group>
+        {message && <Alert color="red" mt="sm">{message}</Alert>}
+      </Container>
+    </Box>
   );
 }

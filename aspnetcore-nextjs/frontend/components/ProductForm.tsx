@@ -1,15 +1,18 @@
 "use client";
 
+import { Alert, Button, Group, NumberInput, Paper, Select, Stack, Textarea, TextInput } from "@mantine/core";
+import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { ProductDetail, ProductFormState, ProductStatus, initialFormState } from "@/lib/types";
 
 type Props = {
   initialValue?: ProductDetail;
   submitLabel: string;
+  cancelHref: string;
   onSubmit: (form: ProductFormState) => Promise<void>;
 };
 
-export function ProductForm({ initialValue, submitLabel, onSubmit }: Props) {
+export function ProductForm({ initialValue, submitLabel, cancelHref, onSubmit }: Props) {
   const [form, setForm] = useState<ProductFormState>(
     initialValue
       ? {
@@ -27,6 +30,10 @@ export function ProductForm({ initialValue, submitLabel, onSubmit }: Props) {
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
+  function update<K extends keyof ProductFormState>(key: K, value: ProductFormState[K]) {
+    setForm((current) => ({ ...current, [key]: value }));
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
@@ -41,19 +48,60 @@ export function ProductForm({ initialValue, submitLabel, onSubmit }: Props) {
   }
 
   return (
-    <form className="space-y-4 rounded border border-slate-200 bg-white p-5" onSubmit={handleSubmit}>
-      {error && <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
-      <label className="block text-sm font-medium">SKU<input className="mt-1 w-full rounded border border-slate-300 px-3 py-2 font-normal" value={form.sku} onChange={(event) => setForm({ ...form, sku: event.target.value })} required /></label>
-      <label className="block text-sm font-medium">商品名<input className="mt-1 w-full rounded border border-slate-300 px-3 py-2 font-normal" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required /></label>
-      <label className="block text-sm font-medium">説明<textarea className="mt-1 w-full rounded border border-slate-300 px-3 py-2 font-normal" value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} rows={4} /></label>
-      <label className="block text-sm font-medium">カテゴリ<input className="mt-1 w-full rounded border border-slate-300 px-3 py-2 font-normal" value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })} /></label>
-      <div className="grid gap-4 sm:grid-cols-3">
-        <label className="block text-sm font-medium">価格<input className="mt-1 w-full rounded border border-slate-300 px-3 py-2 font-normal" value={form.price} onChange={(event) => setForm({ ...form, price: event.target.value })} type="number" min="0" required /></label>
-        <label className="block text-sm font-medium">初期/現在在庫<input className="mt-1 w-full rounded border border-slate-300 px-3 py-2 font-normal" value={form.initialQuantity} onChange={(event) => setForm({ ...form, initialQuantity: event.target.value })} type="number" min="0" required disabled={Boolean(initialValue)} /></label>
-        <label className="block text-sm font-medium">安全在庫<input className="mt-1 w-full rounded border border-slate-300 px-3 py-2 font-normal" value={form.safetyStock} onChange={(event) => setForm({ ...form, safetyStock: event.target.value })} type="number" min="0" required disabled={Boolean(initialValue)} /></label>
-      </div>
-      <label className="block text-sm font-medium">商品ステータス<select className="mt-1 w-full rounded border border-slate-300 px-3 py-2 font-normal" value={form.status} onChange={(event) => setForm({ ...form, status: Number(event.target.value) as ProductStatus })}><option value={0}>販売中</option><option value={1}>停止中</option><option value={2}>廃番</option></select></label>
-      <button className="rounded bg-slate-900 px-4 py-2 text-white disabled:opacity-50" type="submit" disabled={isSaving}>{submitLabel}</button>
-    </form>
+    <Paper component="form" onSubmit={handleSubmit} p="lg" withBorder>
+      <Stack>
+        {error && <Alert color="red">{error}</Alert>}
+        <TextInput
+          label="SKU" value={form.sku} required
+          onChange={(event) => update("sku", event.currentTarget.value)}
+        />
+        <TextInput
+          label="商品名" value={form.name} required
+          onChange={(event) => update("name", event.currentTarget.value)}
+        />
+        <Textarea
+          label="説明" value={form.description} rows={4}
+          onChange={(event) => update("description", event.currentTarget.value)}
+        />
+        <TextInput
+          label="カテゴリ" value={form.category}
+          onChange={(event) => update("category", event.currentTarget.value)}
+        />
+        <NumberInput
+          label="価格（円）" value={form.price} min={0} required
+          onChange={(value) => update("price", String(value))}
+        />
+        {!initialValue && (
+          <Group grow align="start">
+            <NumberInput
+              label="初期在庫数"
+              value={form.initialQuantity}
+              onChange={(value) => update("initialQuantity", String(value))}
+              min={0}
+              required
+            />
+            <NumberInput
+              label="安全在庫数"
+              value={form.safetyStock}
+              onChange={(value) => update("safetyStock", String(value))}
+              min={0}
+              required
+            />
+          </Group>
+        )}
+        <Select
+          label="商品ステータス"
+          value={String(form.status)}
+          onChange={(value) => update("status", Number(value) as ProductStatus)}
+          data={[{ value: "0", label: "販売中" }, { value: "1", label: "停止中" }, { value: "2", label: "廃番" }]}
+          allowDeselect={false}
+          required
+        />
+        <Group justify="flex-end">
+          <Button component={Link} href={cancelHref} variant="default">キャンセル</Button>
+          <Button loading={isSaving} type="submit">{submitLabel}</Button>
+        </Group>
+      </Stack>
+    </Paper>
   );
 }

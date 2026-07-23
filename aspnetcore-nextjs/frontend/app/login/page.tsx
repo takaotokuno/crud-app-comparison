@@ -1,5 +1,6 @@
 "use client";
 
+import { Alert, Button, Center, Paper, PasswordInput, Stack, Text, TextInput, Title } from "@mantine/core";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { requestJson } from "@/lib/api";
@@ -31,17 +32,30 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-6 py-10 text-slate-900">
-      <form className="space-y-5 rounded border border-slate-200 bg-white p-6 shadow-sm" onSubmit={login}>
-        <div>
-          <p className="text-sm text-slate-500">商品在庫管理</p>
-          <h1 className="text-2xl font-semibold">ログイン</h1>
-        </div>
-        {error && <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
-        <label className="block text-sm font-medium">メールアドレス<input className="mt-1 w-full rounded border border-slate-300 px-3 py-2 font-normal" value={email} onChange={(event) => setEmail(event.target.value)} type="email" required /></label>
-        <label className="block text-sm font-medium">パスワード<input className="mt-1 w-full rounded border border-slate-300 px-3 py-2 font-normal" value={password} onChange={(event) => setPassword(event.target.value)} type="password" required /></label>
-        <button className="w-full rounded bg-slate-900 px-4 py-2 text-white disabled:opacity-50" disabled={isLoading} type="submit">ログイン</button>
-      </form>
-    </main>
+    <Center component="main" mih="100vh" p="md">
+      <Paper component="form" onSubmit={login} w="100%" maw={420} p="xl" withBorder shadow="sm">
+        <Stack>
+          <div>
+            <Text c="dimmed" size="sm">商品在庫管理</Text>
+            <Title order={1}>ログイン</Title>
+          </div>
+          {error && <Alert color="red">{error}</Alert>}
+          <TextInput
+            label="メールアドレス"
+            value={email}
+            onChange={(event) => setEmail(event.currentTarget.value)}
+            type="email"
+            required
+          />
+          <PasswordInput
+            label="パスワード"
+            value={password}
+            onChange={(event) => setPassword(event.currentTarget.value)}
+            required
+          />
+          <Button loading={isLoading} type="submit" fullWidth>ログイン</Button>
+        </Stack>
+      </Paper>
+    </Center>
   );
 }
