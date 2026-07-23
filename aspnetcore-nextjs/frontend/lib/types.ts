@@ -106,6 +106,12 @@ export type StockTransactionListResponse = {
   totalCount: number;
 };
 
+export type StockPageResponse = {
+  product: ProductDetail;
+  stock: StockDetail | null;
+  transactions: StockTransactionListResponse;
+};
+
 export const transactionTypeLabels: Record<StockTransactionType, string> = {
   0: "入庫",
   1: "出庫",

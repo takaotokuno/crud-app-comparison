@@ -4,7 +4,7 @@ import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { requestJson, toOptionalValue } from "@/lib/api";
-import { ProductDetail, StockDetail, StockListResponse, StockTransactionListResponse, StockTransactionType, transactionTypeLabels } from "@/lib/types";
+import { ProductDetail, StockDetail, StockPageResponse, StockTransactionListResponse, StockTransactionType, transactionTypeLabels } from "@/lib/types";
 
 export default function ProductStockPage() {
   const { id } = useParams<{ id: string }>();
@@ -30,20 +30,15 @@ export default function ProductStockPage() {
   async function loadStockPage() {
     setMessage("在庫情報を取得中です...");
     try {
-      const [productData, stockData, transactionData] = await Promise.all([
-        requestJson<ProductDetail>(`/api/products/${id}`),
-        requestJson<StockListResponse>(`/api/stocks?product_id=${id}&page=1&page_size=1`),
-        requestJson<StockTransactionListResponse>(`/api/stock-transactions?product_id=${id}&page=1&page_size=20`),
-      ]);
-      const firstStock = stockData.items[0] ?? null;
-      setProduct(productData);
-      setStock(firstStock);
-      setTransactions(transactionData);
-      if (firstStock) {
-        setQuantity(String(firstStock.quantity));
-        setSafetyStock(String(firstStock.safetyStock));
+      const data = await requestJson<StockPageResponse>(`/api/bff/products/${id}/stock-page`);
+      setProduct(data.product);
+      setStock(data.stock);
+      setTransactions(data.transactions);
+      if (data.stock) {
+        setQuantity(String(data.stock.quantity));
+        setSafetyStock(String(data.stock.safetyStock));
       }
-      setMessage(firstStock ? "" : "この商品の在庫情報が見つかりません。");
+      setMessage(data.stock ? "" : "この商品の在庫情報が見つかりません。");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "在庫情報の取得に失敗しました。");
     }
