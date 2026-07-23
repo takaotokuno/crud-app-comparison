@@ -1,10 +1,17 @@
 "use client";
 
+import {
+  Alert, Breadcrumbs, Button, Container, Group, NumberInput, Paper,
+  Select, SimpleGrid, Stack, Table, Text, Textarea, Title,
+} from "@mantine/core";
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { requestJson, toOptionalValue } from "@/lib/api";
-import { ProductDetail, StockDetail, StockPageResponse, StockTransactionListResponse, StockTransactionType, transactionTypeLabels } from "@/lib/types";
+import {
+  ProductDetail, StockDetail, StockPageResponse, StockTransactionListResponse,
+  StockTransactionType, transactionTypeLabels,
+} from "@/lib/types";
 
 export default function ProductStockPage() {
   const { id } = useParams<{ id: string }>();
@@ -56,7 +63,11 @@ export default function ProductStockPage() {
     try {
       const updated = await requestJson<StockDetail>(`/api/stocks/${stock.id}`, {
         method: "PUT",
-        body: JSON.stringify({ quantity: Number(quantity), safetyStock: Number(safetyStock), reason: toOptionalValue(stockReason) }),
+        body: JSON.stringify({
+          quantity: Number(quantity),
+          safetyStock: Number(safetyStock),
+          reason: toOptionalValue(stockReason),
+        }),
       });
       setStock(updated);
       setQuantity(String(updated.quantity));
@@ -78,7 +89,12 @@ export default function ProductStockPage() {
     try {
       await requestJson("/api/stock-transactions", {
         method: "POST",
-        body: JSON.stringify({ productId: id, type: transactionType, quantityDelta, reason: toOptionalValue(transactionReason) }),
+        body: JSON.stringify({
+          productId: id,
+          type: transactionType,
+          quantityDelta,
+          reason: toOptionalValue(transactionReason),
+        }),
       });
       setTransactionQuantity("1");
       setTransactionReason("");
@@ -92,26 +108,97 @@ export default function ProductStockPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-6 py-8 text-slate-900">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-2xl font-semibold">在庫管理</h1>{product && <p className="text-sm text-slate-500">{product.sku} / {product.name}</p>}</div><div className="flex gap-2"><Link className="rounded border border-slate-300 px-3 py-2" href="/products">一覧へ</Link><Link className="rounded border border-slate-300 px-3 py-2" href={`/products/${id}`}>商品詳細へ</Link></div></div>
-      {message && <p className="mb-4 rounded bg-slate-50 px-3 py-2 text-sm text-slate-700">{message}</p>}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <form className="space-y-4 rounded border border-slate-200 bg-white p-5" onSubmit={updateStock}>
-          <h2 className="text-lg font-semibold">現在在庫・安全在庫の編集</h2>
-          <div className="grid gap-4 sm:grid-cols-2"><label className="block text-sm font-medium">現在在庫数<input className="mt-1 w-full rounded border border-slate-300 px-3 py-2 font-normal" value={quantity} onChange={(event) => setQuantity(event.target.value)} type="number" min="0" required disabled={!stock} /></label><label className="block text-sm font-medium">安全在庫数<input className="mt-1 w-full rounded border border-slate-300 px-3 py-2 font-normal" value={safetyStock} onChange={(event) => setSafetyStock(event.target.value)} type="number" min="0" required disabled={!stock} /></label></div>
-          <label className="block text-sm font-medium">更新理由<textarea className="mt-1 w-full rounded border border-slate-300 px-3 py-2 font-normal" value={stockReason} onChange={(event) => setStockReason(event.target.value)} rows={3} placeholder="棚卸調整など" /></label>
-          <button className="rounded bg-slate-900 px-4 py-2 text-white disabled:opacity-50" type="submit" disabled={!stock || isSavingStock}>在庫数を更新</button>
-        </form>
-        <form className="space-y-4 rounded border border-slate-200 bg-white p-5" onSubmit={createTransaction}>
-          <h2 className="text-lg font-semibold">入庫・出庫・調整の登録</h2>
-          <label className="block text-sm font-medium">取引種別<select className="mt-1 w-full rounded border border-slate-300 px-3 py-2 font-normal" value={transactionType} onChange={(event) => setTransactionType(Number(event.target.value) as StockTransactionType)}><option value={0}>入庫</option><option value={1}>出庫</option><option value={2}>調整</option></select></label>
-          <label className="block text-sm font-medium">数量<input className="mt-1 w-full rounded border border-slate-300 px-3 py-2 font-normal" value={transactionQuantity} onChange={(event) => setTransactionQuantity(event.target.value)} type="number" min="1" required /></label>
-          <p className="text-sm text-slate-500">登録される増減数: {quantityDelta}</p>
-          <label className="block text-sm font-medium">理由<textarea className="mt-1 w-full rounded border border-slate-300 px-3 py-2 font-normal" value={transactionReason} onChange={(event) => setTransactionReason(event.target.value)} rows={3} /></label>
-          <button className="rounded bg-slate-900 px-4 py-2 text-white disabled:opacity-50" type="submit" disabled={!stock || isSavingTransaction}>在庫取引を登録</button>
-        </form>
-      </div>
-      <section className="mt-6 rounded border border-slate-200 bg-white p-5"><h2 className="mb-3 text-lg font-semibold">直近の在庫取引履歴</h2><div className="overflow-x-auto"><table className="min-w-full text-left text-sm"><thead className="bg-slate-50"><tr><th className="border-b px-3 py-2">日時</th><th className="border-b px-3 py-2">種別</th><th className="border-b px-3 py-2">増減</th><th className="border-b px-3 py-2">取引後在庫</th><th className="border-b px-3 py-2">理由</th></tr></thead><tbody>{transactions?.items.map((transaction) => <tr key={transaction.id}><td className="border-b border-slate-100 px-3 py-2">{new Date(transaction.createdAt).toLocaleString()}</td><td className="border-b border-slate-100 px-3 py-2">{transactionTypeLabels[transaction.type]}</td><td className="border-b border-slate-100 px-3 py-2 font-semibold">{transaction.quantityDelta}</td><td className="border-b border-slate-100 px-3 py-2">{transaction.quantityAfter}</td><td className="border-b border-slate-100 px-3 py-2">{transaction.reason ?? "-"}</td></tr>)}{(!transactions || transactions.items.length === 0) && <tr><td className="px-3 py-8 text-center text-slate-500" colSpan={5}>在庫取引履歴がありません。</td></tr>}</tbody></table></div></section>
-    </main>
+    <Container component="main" size="lg" py="xl">
+      <Stack gap="lg">
+        <Breadcrumbs>
+          <Link href="/products">商品一覧</Link>
+          <Link href={`/products/${id}`}>商品詳細</Link>
+          <span>在庫操作</span>
+        </Breadcrumbs>
+        <Group justify="space-between">
+          <div>
+            <Title order={1}>在庫操作</Title>
+            {product && <Text c="dimmed">{product.sku}／{product.name}</Text>}
+          </div>
+          <Button component={Link} href={`/products/${id}`} variant="default">キャンセル</Button>
+        </Group>
+        {message && <Alert>{message}</Alert>}
+        <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
+          <Paper component="form" onSubmit={updateStock} p="lg" withBorder>
+            <Stack>
+              <Title order={2} size="h3">在庫情報を直接更新</Title>
+              <Group grow align="start">
+                <NumberInput
+                  label="現在在庫数" value={quantity} min={0} required disabled={!stock}
+                  onChange={(value) => setQuantity(String(value))}
+                />
+                <NumberInput
+                  label="安全在庫数" value={safetyStock} min={0} required disabled={!stock}
+                  onChange={(value) => setSafetyStock(String(value))}
+                />
+              </Group>
+              <Textarea
+                label="更新理由" placeholder="棚卸調整など" value={stockReason} rows={3}
+                onChange={(event) => setStockReason(event.currentTarget.value)}
+              />
+              <Button type="submit" loading={isSavingStock} disabled={!stock}>在庫情報を更新</Button>
+            </Stack>
+          </Paper>
+          <Paper component="form" onSubmit={createTransaction} p="lg" withBorder>
+            <Stack>
+              <Title order={2} size="h3">在庫取引を登録</Title>
+              <Text size="sm">現在在庫数（更新前）: {stock?.quantity ?? "-"}</Text>
+              <Select
+                label="取引種別" value={String(transactionType)} allowDeselect={false}
+                onChange={(value) => setTransactionType(Number(value) as StockTransactionType)}
+                data={[
+                  { value: "0", label: "入庫" },
+                  { value: "1", label: "出庫" },
+                  { value: "2", label: "調整" },
+                ]}
+              />
+              <NumberInput
+                label="数量" value={transactionQuantity} min={1} required
+                onChange={(value) => setTransactionQuantity(String(value))}
+              />
+              <Text size="sm" c="dimmed">取引後在庫（プレビュー）: {(stock?.quantity ?? 0) + quantityDelta}</Text>
+              <Textarea
+                label="理由・メモ" value={transactionReason} rows={3}
+                onChange={(event) => setTransactionReason(event.currentTarget.value)}
+              />
+              <Button type="submit" loading={isSavingTransaction} disabled={!stock}>取引を登録</Button>
+            </Stack>
+          </Paper>
+        </SimpleGrid>
+        <Paper p="lg" withBorder>
+          <Title order={2} size="h3" mb="md">直近の在庫取引履歴</Title>
+          <Table.ScrollContainer minWidth={650}>
+            <Table striped>
+              <Table.Thead>
+                <Table.Tr>
+                  <Table.Th>日時</Table.Th><Table.Th>種別</Table.Th>
+                  <Table.Th>増減</Table.Th><Table.Th>取引後在庫</Table.Th>
+                  <Table.Th>理由</Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>
+                {transactions?.items.map((transaction) => (
+                  <Table.Tr key={transaction.id}>
+                    <Table.Td>{new Date(transaction.createdAt).toLocaleString()}</Table.Td>
+                    <Table.Td>{transactionTypeLabels[transaction.type]}</Table.Td>
+                    <Table.Td fw={700}>{transaction.quantityDelta}</Table.Td>
+                    <Table.Td>{transaction.quantityAfter}</Table.Td>
+                    <Table.Td>{transaction.reason ?? "-"}</Table.Td>
+                  </Table.Tr>
+                ))}
+                {(!transactions || transactions.items.length === 0) && (
+                  <Table.Tr><Table.Td colSpan={5} ta="center" py="xl">在庫取引履歴がありません。</Table.Td></Table.Tr>
+                )}
+              </Table.Tbody>
+            </Table>
+          </Table.ScrollContainer>
+        </Paper>
+      </Stack>
+    </Container>
   );
 }

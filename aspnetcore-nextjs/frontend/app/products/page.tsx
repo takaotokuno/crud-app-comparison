@@ -1,31 +1,54 @@
 "use client";
 
+import {
+  Alert, Breadcrumbs, Button, Checkbox, Container, Group, Paper,
+  Pagination, Select, Stack, Table, Text, TextInput, Title,
+} from "@mantine/core";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { requestJson } from "@/lib/api";
-import { ProductListResponse, ProductStatus, ProductSummary, statusLabels } from "@/lib/types";
+import { ProductListResponse, ProductSummary, statusLabels } from "@/lib/types";
+
+const PAGE_SIZE = 20;
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<ProductSummary[]>([]);
   const [query, setQuery] = useState("");
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState<string | null>(null);
+  const [category, setCategory] = useState("");
   const [lowStock, setLowStock] = useState(false);
+  const [sortBy, setSortBy] = useState<string | null>("updated_at");
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
   const [message, setMessage] = useState("検索条件を指定して商品一覧を取得してください。");
   const [isLoading, setIsLoading] = useState(false);
 
-  const totalStock = useMemo(() => products.reduce((total, product) => total + product.quantity, 0), [products]);
+  const totalStock = useMemo(
+    () => products.reduce((total, product) => total + product.quantity, 0),
+    [products],
+  );
 
-  async function loadProducts() {
+  async function loadProducts(nextPage = 1) {
     setIsLoading(true);
     setMessage("商品一覧を取得中です...");
     try {
-      const searchParams = new URLSearchParams({ page: "1", page_size: "20", sort_by: "updated_at", sort_direction: "desc" });
+      const searchParams = new URLSearchParams({
+        page: String(nextPage),
+        page_size: String(PAGE_SIZE),
+        sort_by: sortBy ?? "updated_at",
+        sort_direction: "desc",
+      });
       if (query.trim()) searchParams.set("q", query.trim());
       if (status) searchParams.set("status", status);
+      if (category.trim()) searchParams.set("category", category.trim());
       if (lowStock) searchParams.set("low_stock", "true");
-      const data = await requestJson<ProductListResponse>(`/api/products?${searchParams.toString()}`);
+      const data = await requestJson<ProductListResponse>(
+        `/api/products?${searchParams.toString()}`,
+      );
       setProducts(data.items);
-      setMessage(`${data.totalCount} 件中 ${data.items.length} 件の商品を取得しました。`);
+      setPage(data.page);
+      setTotalCount(data.totalCount);
+      setMessage(`${data.totalCount} 件中 ${data.items.length} 件を表示しています。`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "商品一覧の取得に失敗しました。");
     } finally {
@@ -33,36 +56,132 @@ export default function ProductsPage() {
     }
   }
 
-  return (
-    <main className="mx-auto w-full max-w-6xl px-6 py-8 text-slate-900">
-      <section className="rounded border border-slate-200 bg-white p-4">
-        <div className="grid gap-3 md:grid-cols-[1fr_180px_auto_auto] md:items-end">
-          <label className="flex flex-col gap-1 text-sm font-medium">検索キーワード<input className="rounded border border-slate-300 px-3 py-2 font-normal" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="SKU / 商品名 / 説明" /></label>
-          <label className="flex flex-col gap-1 text-sm font-medium">ステータス<select className="rounded border border-slate-300 px-3 py-2 font-normal" value={status} onChange={(event) => setStatus(event.target.value)}><option value="">すべて</option><option value="0">販売中</option><option value="1">停止中</option><option value="2">廃番</option></select></label>
-          <label className="flex items-center gap-2 pb-2 text-sm"><input checked={lowStock} onChange={(event) => setLowStock(event.target.checked)} type="checkbox" />安全在庫以下のみ</label>
-          <button className="rounded bg-slate-900 px-4 py-2 text-white disabled:opacity-50" onClick={loadProducts} disabled={isLoading}>一覧取得</button>
-        </div>
-        <p className="mt-3 text-sm text-slate-600">{message}</p>
-      </section>
+  function clearFilters() {
+    setQuery("");
+    setStatus(null);
+    setCategory("");
+    setLowStock(false);
+    setSortBy("updated_at");
+  }
 
-      <section className="mt-8 space-y-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">商品一覧</h1>
-          <p className="text-sm text-slate-500">表示数: {products.length} / 在庫合計: {totalStock}</p>
-        </div>
-        <div className="overflow-x-auto rounded border border-slate-200 bg-white">
-          <table className="min-w-full border-collapse text-left text-sm">
-            <thead className="bg-slate-50"><tr><th className="border-b border-slate-200 px-3 py-2">SKU</th><th className="border-b border-slate-200 px-3 py-2">商品名</th><th className="border-b border-slate-200 px-3 py-2">カテゴリ</th><th className="border-b border-slate-200 px-3 py-2">価格</th><th className="border-b border-slate-200 px-3 py-2">現在在庫</th><th className="border-b border-slate-200 px-3 py-2">安全在庫</th><th className="border-b border-slate-200 px-3 py-2">状態</th><th className="border-b border-slate-200 px-3 py-2">在庫更新日時</th><th className="border-b border-slate-200 px-3 py-2">操作</th></tr></thead>
-            <tbody>
-              {products.map((product) => {
-                const isLowStock = product.quantity <= product.safetyStock;
-                return <tr className={isLowStock ? "bg-amber-50" : undefined} key={product.id}><td className="border-b border-slate-100 px-3 py-2 font-mono">{product.sku}</td><td className="border-b border-slate-100 px-3 py-2">{product.name}</td><td className="border-b border-slate-100 px-3 py-2">{product.category ?? "-"}</td><td className="border-b border-slate-100 px-3 py-2">¥{product.price.toLocaleString()}</td><td className="border-b border-slate-100 px-3 py-2 font-semibold">{product.quantity}</td><td className="border-b border-slate-100 px-3 py-2">{product.safetyStock}</td><td className="border-b border-slate-100 px-3 py-2">{statusLabels[product.status]}</td><td className="border-b border-slate-100 px-3 py-2">{new Date(product.updatedAt).toLocaleString()}</td><td className="border-b border-slate-100 px-3 py-2"><div className="flex gap-2"><Link className="rounded border border-slate-300 px-2 py-1" href={`/products/${product.id}`}>詳細</Link><Link className="rounded border border-slate-300 px-2 py-1" href={`/products/${product.id}/edit`}>編集</Link><Link className="rounded border border-slate-300 px-2 py-1" href={`/products/${product.id}/stock`}>在庫取引</Link></div></td></tr>;
-              })}
-              {products.length === 0 && <tr><td className="px-3 py-8 text-center text-slate-500" colSpan={9}>商品データがありません。一覧取得または条件変更をしてください。</td></tr>}
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </main>
+  return (
+    <Container component="main" size="lg" py="xl">
+      <Stack gap="lg">
+        <Breadcrumbs><span>商品一覧</span></Breadcrumbs>
+        <Group justify="space-between">
+          <Title order={1}>商品一覧</Title>
+          <Button component={Link} href="/products/new">新規登録</Button>
+        </Group>
+        <Paper p="md" withBorder>
+          <Stack>
+            <Group align="end" grow>
+              <TextInput
+                label="検索キーワード"
+                placeholder="SKU・商品名・説明"
+                value={query}
+                onChange={(event) => setQuery(event.currentTarget.value)}
+              />
+              <Select
+                label="ステータス"
+                placeholder="すべて"
+                value={status}
+                onChange={setStatus}
+                clearable
+                data={[
+                  { value: "0", label: "販売中" },
+                  { value: "1", label: "停止中" },
+                  { value: "2", label: "廃番" },
+                ]}
+              />
+              <TextInput
+                label="カテゴリ"
+                value={category}
+                onChange={(event) => setCategory(event.currentTarget.value)}
+              />
+              <Select
+                label="並び順"
+                value={sortBy}
+                onChange={setSortBy}
+                allowDeselect={false}
+                data={[
+                  { value: "updated_at", label: "更新日時" },
+                  { value: "sku", label: "SKU" },
+                  { value: "name", label: "商品名" },
+                  { value: "price", label: "価格" },
+                  { value: "quantity", label: "在庫数" },
+                ]}
+              />
+            </Group>
+            <Group justify="space-between">
+              <Checkbox
+                label="在庫不足のみ"
+                checked={lowStock}
+                onChange={(event) => setLowStock(event.currentTarget.checked)}
+              />
+              <Group>
+                <Button variant="default" onClick={clearFilters}>条件をクリア</Button>
+                <Button loading={isLoading} onClick={() => loadProducts(1)}>検索</Button>
+              </Group>
+            </Group>
+            <Alert>{message}</Alert>
+          </Stack>
+        </Paper>
+        <Group justify="flex-end">
+          <Text size="sm" c="dimmed">表示数: {products.length}／在庫合計: {totalStock}</Text>
+        </Group>
+        <Table.ScrollContainer minWidth={900}>
+          <Table striped highlightOnHover withTableBorder>
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Th>SKU</Table.Th><Table.Th>商品名</Table.Th><Table.Th>カテゴリ</Table.Th>
+                <Table.Th>価格</Table.Th><Table.Th>在庫</Table.Th><Table.Th>安全在庫</Table.Th>
+                <Table.Th>状態</Table.Th><Table.Th>在庫更新日時</Table.Th><Table.Th>操作</Table.Th>
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>
+              {products.map((product) => (
+                <ProductRow key={product.id} product={product} />
+              ))}
+              {products.length === 0 && (
+                <Table.Tr>
+                  <Table.Td colSpan={9} ta="center" py="xl">
+                    商品データがありません。条件を変更するか、新規登録してください。
+                  </Table.Td>
+                </Table.Tr>
+              )}
+            </Table.Tbody>
+          </Table>
+        </Table.ScrollContainer>
+        {totalCount > PAGE_SIZE && (
+          <Pagination
+            value={page}
+            total={Math.ceil(totalCount / PAGE_SIZE)}
+            onChange={(nextPage) => loadProducts(nextPage)}
+            mx="auto"
+          />
+        )}
+      </Stack>
+    </Container>
+  );
+}
+
+function ProductRow({ product }: { product: ProductSummary }) {
+  const isLowStock = product.quantity <= product.safetyStock;
+  return (
+    <Table.Tr bg={isLowStock ? "var(--mantine-color-yellow-0)" : undefined}>
+      <Table.Td ff="monospace">{product.sku}</Table.Td>
+      <Table.Td>{product.name}</Table.Td><Table.Td>{product.category ?? "-"}</Table.Td>
+      <Table.Td>¥{product.price.toLocaleString()}</Table.Td>
+      <Table.Td c={isLowStock ? "red" : undefined} fw={700}>{product.quantity}</Table.Td>
+      <Table.Td>{product.safetyStock}</Table.Td><Table.Td>{statusLabels[product.status]}</Table.Td>
+      <Table.Td>{new Date(product.updatedAt).toLocaleString()}</Table.Td>
+      <Table.Td>
+        <Group gap="xs" wrap="nowrap">
+          <Button component={Link} href={`/products/${product.id}`} size="xs" variant="default">詳細</Button>
+          <Button component={Link} href={`/products/${product.id}/edit`} size="xs" variant="default">編集</Button>
+          <Button component={Link} href={`/products/${product.id}/stock`} size="xs" variant="default">在庫操作</Button>
+        </Group>
+      </Table.Td>
+    </Table.Tr>
   );
 }
