@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { env } from "@/env";
 import type {
   ProductDetail,
   StockListResponse,
   StockPageResponse,
   StockTransactionListResponse,
 } from "@/lib/types";
-
-const apiBaseUrl = process.env.API_BASE_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5000";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -17,7 +16,7 @@ function backendRequest(request: NextRequest, path: string) {
   const cookie = request.headers.get("cookie");
   if (cookie) headers.set("Cookie", cookie);
 
-  return fetch(new URL(path, apiBaseUrl), {
+  return fetch(new URL(path, env.API_BASE_URL), {
     cache: "no-store",
     headers,
     signal: request.signal,
