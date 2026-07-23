@@ -7,10 +7,13 @@ import {
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useHasRole } from "@/components/AuthProvider";
 import { requestJson } from "@/lib/api";
 import { StockPageResponse, statusLabels, transactionTypeLabels } from "@/lib/types";
 
 export default function ProductDetailPage() {
+  const canManageProducts = useHasRole(0);
+  const canManageStock = useHasRole(0, 1);
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [data, setData] = useState<StockPageResponse | null>(null);
@@ -46,13 +49,15 @@ export default function ProductDetailPage() {
           <Title order={1}>商品詳細</Title>
           <Group>
             <Button component={Link} href="/products" variant="default">一覧へ</Button>
-            {product && (
-              <>
-                <Button component={Link} href={`/products/${id}/edit`} variant="default">編集</Button>
-                <Button component={Link} href={`/products/${id}/stock`}>在庫操作</Button>
-              </>
+            {product && canManageProducts && (
+              <Button component={Link} href={`/products/${id}/edit`} variant="default">編集</Button>
             )}
-            <Button color="red" onClick={deleteProduct} disabled={!product}>削除</Button>
+            {product && canManageStock && (
+              <Button component={Link} href={`/products/${id}/stock`}>在庫操作</Button>
+            )}
+            {canManageProducts && (
+              <Button color="red" onClick={deleteProduct} disabled={!product}>削除</Button>
+            )}
           </Group>
         </Group>
         {message && <Alert>{message}</Alert>}

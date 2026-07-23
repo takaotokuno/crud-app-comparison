@@ -3,18 +3,15 @@
 import { Alert, Box, Button, Container, Group, Stack, Text, Title } from "@mantine/core";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useCurrentUser } from "@/components/AuthProvider";
 import { requestJson } from "@/lib/api";
-import { AccountUser, roleLabels } from "@/lib/types";
+import { roleLabels } from "@/lib/types";
 
 export function AppHeader() {
   const router = useRouter();
-  const [user, setUser] = useState<AccountUser | null>(null);
+  const user = useCurrentUser();
   const [message, setMessage] = useState("");
-
-  useEffect(() => {
-    requestJson<AccountUser>("/api/me").then(setUser).catch(() => setUser(null));
-  }, []);
 
   async function logout() {
     try {
@@ -38,20 +35,14 @@ export function AppHeader() {
           </Stack>
           <Group component="nav" gap="sm" wrap="wrap">
             <Button component={Link} href="/products" variant="default">商品一覧</Button>
-            {user?.role !== 2 && (
+            {user.role === 0 && (
               <Button component={Link} href="/products/new">新規登録</Button>
             )}
-            {user?.role === 0 && (
+            {user.role === 0 && (
               <Button variant="default" disabled>ユーザー管理（準備中）</Button>
             )}
-            {user ? (
-              <>
-                <Text size="sm">{roleLabels[user.role]}／{user.name}</Text>
-                <Button variant="default" onClick={logout}>ログアウト</Button>
-              </>
-            ) : (
-              <Button component={Link} href="/login" variant="default">ログイン</Button>
-            )}
+            <Text size="sm">{roleLabels[user.role]}／{user.name}</Text>
+            <Button variant="default" onClick={logout}>ログアウト</Button>
           </Group>
         </Group>
         {message && <Alert color="red" mt="sm">{message}</Alert>}

@@ -6,12 +6,15 @@ import {
 } from "@mantine/core";
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { useHasRole } from "@/components/AuthProvider";
 import { requestJson } from "@/lib/api";
 import { ProductListResponse, ProductSummary, statusLabels } from "@/lib/types";
 
 const PAGE_SIZE = 20;
 
 export default function ProductsPage() {
+  const canManageProducts = useHasRole(0);
+  const canManageStock = useHasRole(0, 1);
   const [products, setProducts] = useState<ProductSummary[]>([]);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<string | null>(null);
@@ -70,7 +73,7 @@ export default function ProductsPage() {
         <Breadcrumbs><span>商品一覧</span></Breadcrumbs>
         <Group justify="space-between">
           <Title order={1}>商品一覧</Title>
-          <Button component={Link} href="/products/new">新規登録</Button>
+          {canManageProducts && <Button component={Link} href="/products/new">新規登録</Button>}
         </Group>
         <Paper p="md" withBorder>
           <Stack>
@@ -140,7 +143,12 @@ export default function ProductsPage() {
             </Table.Thead>
             <Table.Tbody>
               {products.map((product) => (
-                <ProductRow key={product.id} product={product} />
+                <ProductRow
+                  key={product.id}
+                  product={product}
+                  canManageProducts={canManageProducts}
+                  canManageStock={canManageStock}
+                />
               ))}
               {products.length === 0 && (
                 <Table.Tr>
@@ -165,7 +173,15 @@ export default function ProductsPage() {
   );
 }
 
-function ProductRow({ product }: { product: ProductSummary }) {
+function ProductRow({
+  product,
+  canManageProducts,
+  canManageStock,
+}: {
+  product: ProductSummary;
+  canManageProducts: boolean;
+  canManageStock: boolean;
+}) {
   const isLowStock = product.quantity <= product.safetyStock;
   return (
     <Table.Tr bg={isLowStock ? "var(--mantine-color-yellow-0)" : undefined}>
@@ -178,8 +194,12 @@ function ProductRow({ product }: { product: ProductSummary }) {
       <Table.Td>
         <Group gap="xs" wrap="nowrap">
           <Button component={Link} href={`/products/${product.id}`} size="xs" variant="default">詳細</Button>
-          <Button component={Link} href={`/products/${product.id}/edit`} size="xs" variant="default">編集</Button>
-          <Button component={Link} href={`/products/${product.id}/stock`} size="xs" variant="default">在庫操作</Button>
+          {canManageProducts && (
+            <Button component={Link} href={`/products/${product.id}/edit`} size="xs" variant="default">編集</Button>
+          )}
+          {canManageStock && (
+            <Button component={Link} href={`/products/${product.id}/stock`} size="xs" variant="default">在庫操作</Button>
+          )}
         </Group>
       </Table.Td>
     </Table.Tr>
