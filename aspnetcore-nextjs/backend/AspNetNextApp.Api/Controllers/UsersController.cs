@@ -1,6 +1,7 @@
 using AspNetNextApp.Api.Attribute;
 using AspNetNextApp.Api.Contracts.Users;
 using AspNetNextApp.Api.Controllers.Shared;
+using AspNetNextApp.Api.Entities;
 using AspNetNextApp.Api.Enums;
 using AspNetNextApp.Api.Services.Accounts;
 using AspNetNextApp.Api.Services.Users;
@@ -15,6 +16,38 @@ namespace AspNetNextApp.Api.Controllers
     [UserRole(UserRole.Admin)]
     public sealed class UsersController(IUserService userService) : ControllerBase
     {
+        [HttpPost]
+        [ProducesResponseType(typeof(AccountUserResponse), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        public async Task<ActionResult<AccountUserResponse>> CreateAsync(
+            [FromBody] CreateUserRequest request,
+            CancellationToken cancellationToken)
+        {
+            AccountResult<User> result = await userService.CreateUserAsync(
+                request.Email,
+                request.Password,
+                request.Name,
+                request.Role,
+                cancellationToken);
+
+            if (!result.IsSuccess)
+            {
+                return AccountControllerResults.ToActionResult(this, result)
+                    .Result!;
+            }
+
+            User user = result.Value!;
+            AccountUserResponse response = new(
+                user.Id,
+                user.Email,
+                user.Name,
+                user.Role);
+            return CreatedAtAction(nameof(GetAsync), new { id = response.Id }, response);
+        }
+
         [HttpGet]
         [ProducesResponseType(typeof(AccountUserListResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]

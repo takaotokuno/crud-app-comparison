@@ -18,6 +18,7 @@ namespace AspNetNextApp.Api.Services.Users
             string email,
             string password,
             string name,
+            UserRole role,
             CancellationToken cancellationToken = default)
         {
             if (await IsEmailInUseAsync(email, excludedUserId: null, cancellationToken))
@@ -29,6 +30,7 @@ namespace AspNetNextApp.Api.Services.Users
             {
                 Email = email,
                 Name = name,
+                Role = role,
             };
             user.PasswordHash = passwordHasher.HashPassword(user, password);
 

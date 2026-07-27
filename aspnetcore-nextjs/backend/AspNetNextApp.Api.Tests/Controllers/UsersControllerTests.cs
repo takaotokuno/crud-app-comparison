@@ -1,8 +1,13 @@
 using AspNetNextApp.Api.Attribute;
 using AspNetNextApp.Api.Controllers;
+using AspNetNextApp.Api.Contracts.Users;
+using AspNetNextApp.Api.Entities;
 using AspNetNextApp.Api.Enums;
+using AspNetNextApp.Api.Services.Accounts;
+using AspNetNextApp.Api.Services.Users;
 
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
 
 using Xunit;
@@ -11,6 +16,24 @@ namespace AspNetNextApp.Api.Tests.Controllers
 {
     public sealed class UsersControllerTests
     {
+        [Fact]
+        public async Task CreateAsync_WhenServiceSucceedsReturnsCreatedUser()
+        {
+            CapturingUserService service = new();
+            UsersController controller = new(service);
+            CreateUserRequest request = new("staff@example.com", "password123", "Staff User", UserRole.Staff);
+
+            ActionResult<AccountUserResponse> actionResult = await controller.CreateAsync(request, CancellationToken.None);
+
+            CreatedAtActionResult createdResult = Assert.IsType<CreatedAtActionResult>(actionResult.Result);
+            Assert.Equal(nameof(UsersController.GetAsync), createdResult.ActionName);
+            AccountUserResponse response = Assert.IsType<AccountUserResponse>(createdResult.Value);
+            Assert.Equal(request.Email, response.Email);
+            Assert.Equal(request.Name, response.Name);
+            Assert.Equal(request.Role, response.Role);
+            Assert.Equal(request.Password, service.CapturedPassword);
+        }
+
         [Fact]
         public void UsersController_RequiresAuthenticatedAdmins()
         {
@@ -25,6 +48,7 @@ namespace AspNetNextApp.Api.Tests.Controllers
 
         [Theory]
         [InlineData(nameof(UsersController.ListAsync), null)]
+        [InlineData(nameof(UsersController.CreateAsync), null)]
         [InlineData(nameof(UsersController.GetAsync), "{id:guid}")]
         [InlineData(nameof(UsersController.UpdateAsync), "{id:guid}")]
         [InlineData(nameof(UsersController.DeleteAsync), "{id:guid}")]
@@ -38,6 +62,25 @@ namespace AspNetNextApp.Api.Tests.Controllers
                 method.GetCustomAttributes(typeof(HttpMethodAttribute), inherit: true).Cast<HttpMethodAttribute>());
 
             Assert.Equal(routeTemplate, attribute.Template);
+        }
+
+        private sealed class CapturingUserService : IUserService
+        {
+            public string? CapturedPassword { get; private set; }
+
+            public Task<AccountResult<User>> CreateUserAsync(string email, string password, string name, UserRole role, CancellationToken cancellationToken = default)
+            {
+                CapturedPassword = password;
+                User user = new() { Email = email, Name = name, Role = role };
+                return Task.FromResult(AccountResult<User>.Success(user));
+            }
+
+            public Task<AccountResult<AccountUserListResponse>> ListUsersAsync(int page, int pageSize, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+            public Task<AccountResult<AccountUserResponse>> GetUserAsync(Guid id, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+            public Task<AccountResult<AccountUserResponse>> UpdateUserAsync(Guid id, string email, string name, UserRole role, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+            public Task<AccountResult<bool>> DeleteUserAsync(Guid id, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+            public Task<AccountResult<AccountUserResponse>> ChangeUserRoleAsync(Guid id, UserRole role, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+            public Task<bool> IsEmailInUseAsync(string email, Guid? excludedUserId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         }
     }
 }

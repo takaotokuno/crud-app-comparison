@@ -1,5 +1,6 @@
 using AspNetNextApp.Api.Data;
 using AspNetNextApp.Api.Entities;
+using AspNetNextApp.Api.Enums;
 using AspNetNextApp.Api.Services.Accounts;
 using AspNetNextApp.Api.Services.Users;
 using Microsoft.AspNetCore.Identity;
@@ -27,7 +28,12 @@ namespace AspNetNextApp.Api.Services.Auth
             string name,
             CancellationToken cancellationToken = default)
         {
-            AccountResult<User> result = await userService.CreateUserAsync(email, password, name, cancellationToken);
+            AccountResult<User> result = await userService.CreateUserAsync(
+                email,
+                password,
+                name,
+                UserRole.Viewer,
+                cancellationToken);
             return result.IsSuccess && result.Value is not null
                 ? AccountRegistrationResult.Success(result.Value)
                 : AccountRegistrationResult.Failure(result.Error ?? "Registration failed.");
