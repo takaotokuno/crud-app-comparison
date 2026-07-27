@@ -63,6 +63,16 @@ npm run dev
 
 ## 実装メモ
 
+### 開発用初期データ
+
+Development 環境でバックエンドを起動すると、EF Core のマイグレーション適用後に共通要件の初期データを自動投入します。何度起動しても、メールアドレスと SKU を基準に不足分だけを追加します。
+
+- ユーザー: `admin@example.com`、`staff@example.com`、`viewer@example.com`
+- 初期パスワード: `password`（DB にはハッシュ化して保存）
+- 商品・在庫: `SKU-001` から `SKU-005`
+
+初期在庫は商品の Stock として作成し、StockTransaction には記録しません。
+
 ### データモデル実装方針
 
 - Product は商品マスタとして扱い、Stock と StockTransaction の履歴参照元になるため物理削除しません。商品削除 API は `Products.Status = Discontinued` へ更新する論理削除として実装します。
