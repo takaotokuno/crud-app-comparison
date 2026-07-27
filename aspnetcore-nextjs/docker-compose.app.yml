@@ -10,8 +10,10 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__DefaultConnection: "Server=db,1433;Database=AppDb;User Id=sa;Password=Your_strong_password123;TrustServerCertificate=True;Encrypt=False;"
+      Database__ApplyMigrations: "true"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - aspnetcore-nextjs
 
@@ -28,7 +30,8 @@ services:
       NODE_ENV: production
       API_BASE_URL: http://backend:8080
     depends_on:
-      - backend
+      backend:
+        condition: service_started
     networks:
       - aspnetcore-nextjs
 
