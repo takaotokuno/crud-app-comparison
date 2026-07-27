@@ -1,0 +1,13 @@
+:root {
+  color: #172033;
+  background: #f4f7fb;
+  font-family: system-ui, sans-serif;
+}
+
+body { margin: 0; }
+header { padding: 1rem 2rem; background: #172033; }
+nav a { color: white; font-weight: 700; text-decoration: none; }
+main { max-width: 64rem; margin: 0 auto; padding: 4rem 2rem; }
+.hero { padding: 3rem; border-radius: 1rem; background: white; box-shadow: 0 1rem 2.5rem rgb(23 32 51 / 8%); }
+.hero h1 { margin: .25rem 0 1rem; font-size: clamp(2rem, 6vw, 4rem); }
+.eyebrow { color: #2563eb; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }

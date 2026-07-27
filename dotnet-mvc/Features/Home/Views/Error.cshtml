@@ -1,0 +1,11 @@
+@model DotnetMvc.Features.Home.Models.ErrorViewModel
+@{
+    ViewData["Title"] = "エラー";
+}
+
+<h1>エラーが発生しました。</h1>
+<p>処理を完了できませんでした。</p>
+@if (Model.ShowRequestId)
+{
+    <p>Request ID: <code>@Model.RequestId</code></p>
+}

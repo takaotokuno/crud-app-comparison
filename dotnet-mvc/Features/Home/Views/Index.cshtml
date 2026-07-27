@@ -1,0 +1,10 @@
+@model DotnetMvc.Features.Home.Models.HomeIndexViewModel
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<section class="hero">
+    <p class="eyebrow">ASP.NET Core MVC</p>
+    <h1>@Model.Title</h1>
+    <p>@Model.Description</p>
+</section>

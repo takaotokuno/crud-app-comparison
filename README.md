@@ -16,4 +16,4 @@
 
 | Stack | Folder | Status |
 | --- | --- | --- |
-
+| ASP.NET Core MVC (.NET 8) | [`dotnet-mvc/`](./dotnet-mvc/) | Basic structure |
