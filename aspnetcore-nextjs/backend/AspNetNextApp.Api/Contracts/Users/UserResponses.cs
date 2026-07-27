@@ -6,7 +6,9 @@ namespace AspNetNextApp.Api.Contracts.Users
         Guid Id,
         string Email,
         string Name,
-        UserRole Role);
+        UserRole Role,
+        DateTimeOffset CreatedAt,
+        DateTimeOffset UpdatedAt);
 
     public sealed record AccountUserListResponse(
         IReadOnlyCollection<AccountUserResponse> Items,

@@ -44,7 +44,9 @@ namespace AspNetNextApp.Api.Controllers
                 user.Id,
                 user.Email,
                 user.Name,
-                user.Role);
+                user.Role,
+                user.CreatedAt,
+                user.UpdatedAt);
             return CreatedAtAction(nameof(GetAsync), new { id = response.Id }, response);
         }
 

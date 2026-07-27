@@ -13,6 +13,14 @@ namespace AspNetNextApp.Api.Services.Profile
         IPasswordHasher<User> passwordHasher,
         IAuthService authService) : IProfileService
     {
+        public async Task<AccountResult<AccountUserResponse>> GetProfileAsync(Guid id, CancellationToken cancellationToken = default)
+        {
+            User? user = await dbContext.Users.AsNoTracking().SingleOrDefaultAsync(candidate => candidate.Id == id, cancellationToken);
+            return user is null
+                ? AccountResult<AccountUserResponse>.Failure("User was not found.", AccountErrorType.NotFound)
+                : AccountResult<AccountUserResponse>.Success(ToResponse(user));
+        }
+
         public async Task<AccountResult<AccountUserResponse>> UpdateProfileAsync(Guid id, string name, CancellationToken cancellationToken = default)
         {
             User? user = await dbContext.Users.SingleOrDefaultAsync(candidate => candidate.Id == id, cancellationToken);
@@ -46,7 +54,7 @@ namespace AspNetNextApp.Api.Services.Profile
 
         private static AccountUserResponse ToResponse(User user)
         {
-            return new(user.Id, user.Email, user.Name, user.Role);
+            return new(user.Id, user.Email, user.Name, user.Role, user.CreatedAt, user.UpdatedAt);
         }
     }
 }

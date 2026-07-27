@@ -45,10 +45,10 @@ export default function UsersPage() {
           <Button component={Link} href="/users/new">新規登録</Button>
         </Group>
         <Alert color={isLoading ? "blue" : undefined}>{message}</Alert>
-        <Table.ScrollContainer minWidth={700}>
+        <Table.ScrollContainer minWidth={1000}>
           <Table striped highlightOnHover withTableBorder>
             <Table.Thead>
-              <Table.Tr><Table.Th>メールアドレス</Table.Th><Table.Th>表示名</Table.Th><Table.Th>ロール</Table.Th><Table.Th>操作</Table.Th></Table.Tr>
+              <Table.Tr><Table.Th>メールアドレス</Table.Th><Table.Th>表示名</Table.Th><Table.Th>ロール</Table.Th><Table.Th>作成日時</Table.Th><Table.Th>更新日時</Table.Th><Table.Th>操作</Table.Th></Table.Tr>
             </Table.Thead>
             <Table.Tbody>
               {users.map((user) => (
@@ -56,11 +56,13 @@ export default function UsersPage() {
                   <Table.Td>{user.email}</Table.Td>
                   <Table.Td>{user.name}</Table.Td>
                   <Table.Td>{roleLabels[user.role]}</Table.Td>
+                  <Table.Td>{new Date(user.createdAt).toLocaleString()}</Table.Td>
+                  <Table.Td>{new Date(user.updatedAt).toLocaleString()}</Table.Td>
                   <Table.Td><Button component={Link} href={`/users/${user.id}`} size="xs" variant="default">詳細</Button></Table.Td>
                 </Table.Tr>
               ))}
               {!isLoading && users.length === 0 && (
-                <Table.Tr><Table.Td colSpan={4} ta="center" py="xl"><Text c="dimmed">ユーザーが登録されていません。</Text></Table.Td></Table.Tr>
+                <Table.Tr><Table.Td colSpan={6} ta="center" py="xl"><Text c="dimmed">ユーザーが登録されていません。</Text></Table.Td></Table.Tr>
               )}
             </Table.Tbody>
           </Table>
