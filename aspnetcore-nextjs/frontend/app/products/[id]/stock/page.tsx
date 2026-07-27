@@ -5,7 +5,7 @@ import {
   Select, SimpleGrid, Stack, Table, Text, Textarea, Title,
 } from "@mantine/core";
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { requestJson, toOptionalValue } from "@/lib/api";
 import {
@@ -55,8 +55,7 @@ export default function ProductStockPage() {
     void loadStockPage();
   }, [id]);
 
-  async function updateStock(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function updateStock() {
     if (!stock) return;
     setIsSavingStock(true);
     setMessage("");
@@ -82,8 +81,7 @@ export default function ProductStockPage() {
     }
   }
 
-  async function createTransaction(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function createTransaction() {
     setIsSavingTransaction(true);
     setMessage("");
     try {
@@ -124,7 +122,15 @@ export default function ProductStockPage() {
         </Group>
         {message && <Alert>{message}</Alert>}
         <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
-          <Paper component="form" onSubmit={updateStock} p="lg" withBorder>
+          <Paper
+            component="form"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void updateStock();
+            }}
+            p="lg"
+            withBorder
+          >
             <Stack>
               <Title order={2} size="h3">在庫情報を直接更新</Title>
               <Group grow align="start">
@@ -144,7 +150,15 @@ export default function ProductStockPage() {
               <Button type="submit" loading={isSavingStock} disabled={!stock}>在庫情報を更新</Button>
             </Stack>
           </Paper>
-          <Paper component="form" onSubmit={createTransaction} p="lg" withBorder>
+          <Paper
+            component="form"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void createTransaction();
+            }}
+            p="lg"
+            withBorder
+          >
             <Stack>
               <Title order={2} size="h3">在庫取引を登録</Title>
               <Text size="sm">現在在庫数（更新前）: {stock?.quantity ?? "-"}</Text>

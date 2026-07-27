@@ -2,7 +2,7 @@
 
 import { Alert, Button, Group, NumberInput, Paper, Select, Stack, Textarea, TextInput } from "@mantine/core";
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { useState } from "react";
 import { ProductDetail, ProductFormState, ProductStatus, initialFormState } from "@/lib/types";
 
 type Props = {
@@ -34,8 +34,7 @@ export function ProductForm({ initialValue, submitLabel, cancelHref, onSubmit }:
     setForm((current) => ({ ...current, [key]: value }));
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function handleSubmit() {
     setError("");
     setIsSaving(true);
     try {
@@ -48,7 +47,15 @@ export function ProductForm({ initialValue, submitLabel, cancelHref, onSubmit }:
   }
 
   return (
-    <Paper component="form" onSubmit={handleSubmit} p="lg" withBorder>
+    <Paper
+      component="form"
+      onSubmit={(event) => {
+        event.preventDefault();
+        void handleSubmit();
+      }}
+      p="lg"
+      withBorder
+    >
       <Stack>
         {error && <Alert color="red">{error}</Alert>}
         <TextInput
