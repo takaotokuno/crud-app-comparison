@@ -39,7 +39,7 @@ export function AppHeader() {
               <Button component={Link} href="/products/new">新規登録</Button>
             )}
             {user.role === 0 && (
-              <Button variant="default" disabled>ユーザー管理（準備中）</Button>
+              <Button component={Link} href="/users" variant="default">ユーザー管理</Button>
             )}
             <Text size="sm">{roleLabels[user.role]}／{user.name}</Text>
             <Button variant="default" onClick={logout}>ログアウト</Button>
