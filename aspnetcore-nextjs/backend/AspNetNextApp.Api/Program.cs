@@ -47,6 +47,13 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 WebApplication app = builder.Build();
 
+if (builder.Configuration.GetValue<bool>("Database:ApplyMigrations"))
+{
+    await using AsyncServiceScope scope = app.Services.CreateAsyncScope();
+    AppDbContext dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await dbContext.Database.MigrateAsync();
+}
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {

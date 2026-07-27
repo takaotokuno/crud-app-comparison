@@ -41,12 +41,33 @@ npx create-next-app@latest frontend --ts --eslint --app --src-dir --import-alias
 
 ## 実行例
 
+Docker Compose で DB、バックエンド、フロントエンドをまとめて起動する場合:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.app.yml up --build
+```
+
+`db` のヘルスチェックが成功してからバックエンドが起動し、バックエンドは起動時に未適用の EF Core migration を自動適用します。適用済み migration は EF Core の履歴テーブルで管理されるため、コンテナを再起動しても重複適用されません。
+
+自動適用は Compose 環境で `Database__ApplyMigrations=true` を設定した場合だけ有効です。通常のアプリ起動では既定で無効なので、複数インスタンスを同時起動する本番環境では、デプロイ前の migration job など単一プロセスから適用してください。
+
 バックエンド:
 
 ```bash
 cd backend
 dotnet run
 ```
+
+ローカルで migration を手動適用する場合（SQL Server を先に起動し、接続文字列を環境に合わせて設定）:
+
+```bash
+docker compose up -d db
+cd backend
+dotnet tool install --global dotnet-ef --version 9.* # 初回のみ
+dotnet ef database update --project AspNetNextApp.Api/AspNetNextApp.Api.csproj
+```
+
+手動適用後は通常どおり `dotnet run --project AspNetNextApp.Api/AspNetNextApp.Api.csproj` で起動できます。アプリ起動時に自動適用したい単一インスタンス環境では、`Database__ApplyMigrations=true` を設定して起動することもできます。
 
 フロントエンド:
 
