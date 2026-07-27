@@ -14,7 +14,7 @@ namespace AspNetNextApp.Api.Services.Users
             UserRole role,
             CancellationToken cancellationToken = default);
 
-        Task<AccountResult<AccountUserListResponse>> ListUsersAsync(int page, int pageSize, CancellationToken cancellationToken = default);
+        Task<AccountResult<AccountUserListResponse>> ListUsersAsync(ListUsersQuery query, CancellationToken cancellationToken = default);
 
         Task<AccountResult<AccountUserResponse>> GetUserAsync(Guid id, CancellationToken cancellationToken = default);
 

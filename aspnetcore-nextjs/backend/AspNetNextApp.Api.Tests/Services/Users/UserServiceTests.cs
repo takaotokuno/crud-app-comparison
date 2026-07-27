@@ -13,6 +13,62 @@ namespace AspNetNextApp.Api.Tests.Services.Users
     public sealed class UserServiceTests
     {
         [Fact]
+        public async Task ListUsersAsync_AppliesSearchRoleSortAndPaging()
+        {
+            await using AppDbContext dbContext = CreateDbContext();
+            _ = AddUser(dbContext, UserRole.Staff, "alice@example.com", "Alice", DateTimeOffset.Parse("2026-01-01"));
+            _ = AddUser(dbContext, UserRole.Staff, "alicia@example.com", "Alicia", DateTimeOffset.Parse("2026-01-02"));
+            _ = AddUser(dbContext, UserRole.Admin, "admin@example.com", "Alice Admin", DateTimeOffset.Parse("2026-01-03"));
+            _ = AddUser(dbContext, UserRole.Staff, "bob@example.com", "Bob", DateTimeOffset.Parse("2026-01-04"));
+            _ = await dbContext.SaveChangesAsync();
+
+            AccountResult<AccountUserListResponse> result = await CreateService(dbContext).ListUsersAsync(
+                new ListUsersQuery("ali", UserRole.Staff, "name", "desc", 2, 1));
+
+            Assert.True(result.IsSuccess);
+            Assert.Equal(2, result.Value!.TotalCount);
+            Assert.Equal(2, result.Value.Page);
+            Assert.Equal(1, result.Value.PageSize);
+            Assert.Equal("Alice", Assert.Single(result.Value.Items).Name);
+        }
+
+        [Theory]
+        [InlineData("email")]
+        [InlineData("name")]
+        [InlineData("role")]
+        [InlineData("created_at")]
+        [InlineData("updated_at")]
+        public async Task ListUsersAsync_SortsEverySupportedFieldDescending(string sortBy)
+        {
+            await using AppDbContext dbContext = CreateDbContext();
+            User first = AddUser(dbContext, UserRole.Admin, "a@example.com", "A", DateTimeOffset.Parse("2026-01-01"));
+            first.UpdatedAt = DateTimeOffset.Parse("2026-02-01");
+            User second = AddUser(dbContext, UserRole.Viewer, "z@example.com", "Z", DateTimeOffset.Parse("2026-01-02"));
+            second.UpdatedAt = DateTimeOffset.Parse("2026-02-02");
+            _ = await dbContext.SaveChangesAsync();
+
+            AccountResult<AccountUserListResponse> result = await CreateService(dbContext).ListUsersAsync(
+                new ListUsersQuery(null, null, sortBy, "desc", 1, 20));
+
+            Assert.Equal(second.Id, result.Value!.Items.First().Id);
+        }
+
+        [Fact]
+        public async Task ListUsersAsync_DefaultsToCreatedAtDescending()
+        {
+            await using AppDbContext dbContext = CreateDbContext();
+            User older = AddUser(dbContext, UserRole.Staff, "z@example.com", "Z", DateTimeOffset.Parse("2026-01-01"));
+            User newer = AddUser(dbContext, UserRole.Staff, "a@example.com", "A", DateTimeOffset.Parse("2026-01-02"));
+            _ = await dbContext.SaveChangesAsync();
+
+            AccountResult<AccountUserListResponse> result = await CreateService(dbContext).ListUsersAsync(
+                new ListUsersQuery(null, null, null, null, 1, 20));
+
+            Assert.Equal(newer.Id, result.Value!.Items.First().Id);
+            Assert.Equal(older.Id, result.Value.Items.Last().Id);
+        }
+
+        [Fact]
         public async Task DeleteUserAsync_WhenDeletingCurrentUserReturnsConflict()
         {
             await using AppDbContext dbContext = CreateDbContext();
@@ -74,14 +130,21 @@ namespace AspNetNextApp.Api.Tests.Services.Users
             Assert.Equal(UserRole.Admin, (await dbContext.Users.FindAsync(admin.Id))!.Role);
         }
 
-        private static User AddUser(AppDbContext dbContext, UserRole role)
+        private static User AddUser(
+            AppDbContext dbContext,
+            UserRole role,
+            string? email = null,
+            string name = "Test User",
+            DateTimeOffset? createdAt = null)
         {
             User user = new()
             {
-                Email = $"{Guid.NewGuid():N}@example.com",
-                Name = "Test User",
+                Email = email ?? $"{Guid.NewGuid():N}@example.com",
+                Name = name,
                 PasswordHash = "hash",
                 Role = role,
+                CreatedAt = createdAt ?? DateTimeOffset.UtcNow,
+                UpdatedAt = createdAt ?? DateTimeOffset.UtcNow,
             };
             _ = dbContext.Users.Add(user);
             return user;
