@@ -9,6 +9,20 @@ export type AccountUser = {
   role: UserRole;
 };
 
+export type UserListResponse = {
+  items: AccountUser[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+};
+
+export type UserFormState = {
+  email: string;
+  name: string;
+  role: UserRole;
+  password: string;
+};
+
 export type ProductSummary = {
   id: string;
   sku: string;
