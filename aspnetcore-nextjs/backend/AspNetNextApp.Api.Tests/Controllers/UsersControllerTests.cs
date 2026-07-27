@@ -78,7 +78,7 @@ namespace AspNetNextApp.Api.Tests.Controllers
             public Task<AccountResult<AccountUserListResponse>> ListUsersAsync(int page, int pageSize, CancellationToken cancellationToken = default) => throw new NotImplementedException();
             public Task<AccountResult<AccountUserResponse>> GetUserAsync(Guid id, CancellationToken cancellationToken = default) => throw new NotImplementedException();
             public Task<AccountResult<AccountUserResponse>> UpdateUserAsync(Guid id, string email, string name, UserRole role, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-            public Task<AccountResult<bool>> DeleteUserAsync(Guid id, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+            public Task<AccountResult<bool>> DeleteUserAsync(Guid id, Guid currentUserId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
             public Task<AccountResult<AccountUserResponse>> ChangeUserRoleAsync(Guid id, UserRole role, CancellationToken cancellationToken = default) => throw new NotImplementedException();
             public Task<bool> IsEmailInUseAsync(string email, Guid? excludedUserId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         }

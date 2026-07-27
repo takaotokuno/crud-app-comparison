@@ -90,6 +90,13 @@ namespace AspNetNextApp.Api.Services.Users
                 return AccountResult<AccountUserResponse>.Failure("Email is already registered.", AccountErrorType.Conflict);
             }
 
+            if (user.Role == UserRole.Admin
+                && role != UserRole.Admin
+                && !await HasAnotherAdminAsync(id, cancellationToken))
+            {
+                return AccountResult<AccountUserResponse>.Failure("The last admin user cannot be demoted.", AccountErrorType.Conflict);
+            }
+
             user.Email = email;
             user.Name = name;
             user.Role = role;
@@ -97,12 +104,22 @@ namespace AspNetNextApp.Api.Services.Users
             return AccountResult<AccountUserResponse>.Success(ToResponse(user));
         }
 
-        public async Task<AccountResult<bool>> DeleteUserAsync(Guid id, CancellationToken cancellationToken = default)
+        public async Task<AccountResult<bool>> DeleteUserAsync(Guid id, Guid currentUserId, CancellationToken cancellationToken = default)
         {
             User? user = await dbContext.Users.FindAsync([id], cancellationToken);
             if (user is null)
             {
                 return AccountResult<bool>.Failure("User was not found.", AccountErrorType.NotFound);
+            }
+
+            if (id == currentUserId)
+            {
+                return AccountResult<bool>.Failure("You cannot delete your own user account.", AccountErrorType.Conflict);
+            }
+
+            if (user.Role == UserRole.Admin && !await HasAnotherAdminAsync(id, cancellationToken))
+            {
+                return AccountResult<bool>.Failure("The last admin user cannot be deleted.", AccountErrorType.Conflict);
             }
 
             _ = dbContext.Users.Remove(user);
@@ -118,6 +135,13 @@ namespace AspNetNextApp.Api.Services.Users
                 return AccountResult<AccountUserResponse>.Failure("User was not found.", AccountErrorType.NotFound);
             }
 
+            if (user.Role == UserRole.Admin
+                && role != UserRole.Admin
+                && !await HasAnotherAdminAsync(id, cancellationToken))
+            {
+                return AccountResult<AccountUserResponse>.Failure("The last admin user cannot be demoted.", AccountErrorType.Conflict);
+            }
+
             user.Role = role;
             _ = await dbContext.SaveChangesAsync(cancellationToken);
             return AccountResult<AccountUserResponse>.Success(ToResponse(user));
@@ -127,6 +151,13 @@ namespace AspNetNextApp.Api.Services.Users
         {
             return dbContext.Users.AnyAsync(
                 user => user.Email == email && (!excludedUserId.HasValue || user.Id != excludedUserId.Value),
+                cancellationToken);
+        }
+
+        private Task<bool> HasAnotherAdminAsync(Guid excludedUserId, CancellationToken cancellationToken)
+        {
+            return dbContext.Users.AnyAsync(
+                user => user.Id != excludedUserId && user.Role == UserRole.Admin,
                 cancellationToken);
         }
 

@@ -1,3 +1,5 @@
+using System.Security.Claims;
+
 using AspNetNextApp.Api.Attribute;
 using AspNetNextApp.Api.Contracts.Users;
 using AspNetNextApp.Api.Controllers.Shared;
@@ -98,9 +100,15 @@ namespace AspNetNextApp.Api.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<IActionResult> DeleteAsync(Guid id, CancellationToken cancellationToken)
         {
-            AccountResult<bool> result = await userService.DeleteUserAsync(id, cancellationToken);
+            if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid currentUserId))
+            {
+                return Unauthorized(new { message = "Invalid authentication cookie." });
+            }
+
+            AccountResult<bool> result = await userService.DeleteUserAsync(id, currentUserId, cancellationToken);
             return AccountControllerResults.ToActionResult(this, result, NoContent());
         }
 
@@ -109,6 +117,7 @@ namespace AspNetNextApp.Api.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<ActionResult<AccountUserResponse>> ChangeRoleAsync(
             Guid id,
             [FromBody] ChangeUserRoleRequest request,
