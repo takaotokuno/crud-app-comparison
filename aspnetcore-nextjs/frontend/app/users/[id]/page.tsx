@@ -46,6 +46,8 @@ export default function UserDetailPage() {
         <Info label="表示名" value={user.name} />
         <Info label="ロール" value={roleLabels[user.role]} />
         <Info label="ユーザーID" value={user.id} mono />
+        <Info label="作成日時" value={new Date(user.createdAt).toLocaleString()} />
+        <Info label="更新日時" value={new Date(user.updatedAt).toLocaleString()} />
       </SimpleGrid></Paper>}
     </Stack></Container>
   );

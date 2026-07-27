@@ -1,9 +1,6 @@
-using System.Security.Claims;
-
 using AspNetNextApp.Api.Contracts.Profile;
 using AspNetNextApp.Api.Contracts.Users;
 using AspNetNextApp.Api.Controllers.Shared;
-using AspNetNextApp.Api.Enums;
 using AspNetNextApp.Api.Services.Accounts;
 using AspNetNextApp.Api.Services.Profile;
 using AspNetNextApp.Api.Services.Tokens;
@@ -22,21 +19,15 @@ namespace AspNetNextApp.Api.Controllers
         [HttpGet("me")]
         [ProducesResponseType(typeof(AccountUserResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public ActionResult<AccountUserResponse> GetMe()
+        public async Task<ActionResult<AccountUserResponse>> GetMe(CancellationToken cancellationToken)
         {
-            string? idValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            string? email = User.FindFirstValue(ClaimTypes.Email);
-            string? name = User.FindFirstValue(ClaimTypes.Name);
-            string? roleValue = User.FindFirstValue(ClaimTypes.Role);
-
-            if (!Guid.TryParse(idValue, out Guid id) || email is null || name is null || roleValue is null)
+            if (!TryGetCurrentUserId(out Guid id))
             {
                 return Unauthorized(new { message = "Invalid authentication cookie." });
             }
 
-            return Enum.TryParse(roleValue, out UserRole role)
-                ? Ok(new AccountUserResponse(id, email, name, role))
-                : Unauthorized(new { message = "Invalid authentication cookie." });
+            AccountResult<AccountUserResponse> result = await profileService.GetProfileAsync(id, cancellationToken);
+            return AccountControllerResults.ToActionResult(this, result);
         }
 
         [HttpPut("me")]

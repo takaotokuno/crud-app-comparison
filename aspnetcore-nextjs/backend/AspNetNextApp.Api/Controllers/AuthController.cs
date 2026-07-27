@@ -97,7 +97,7 @@ namespace AspNetNextApp.Api.Controllers
 
         private static AccountUserResponse ToResponse(User user)
         {
-            return new(user.Id, user.Email, user.Name, user.Role);
+            return new(user.Id, user.Email, user.Name, user.Role, user.CreatedAt, user.UpdatedAt);
         }
     }
 }

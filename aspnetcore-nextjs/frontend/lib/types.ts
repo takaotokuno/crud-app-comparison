@@ -7,6 +7,8 @@ export type AccountUser = {
   email: string;
   name: string;
   role: UserRole;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type UserListResponse = {
