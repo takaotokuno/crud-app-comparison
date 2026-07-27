@@ -7,7 +7,12 @@ namespace AspNetNextApp.Api.Services.Users
 {
     public interface IUserService
     {
-        Task<AccountResult<User>> CreateUserAsync(string email, string password, string name, CancellationToken cancellationToken = default);
+        Task<AccountResult<User>> CreateUserAsync(
+            string email,
+            string password,
+            string name,
+            UserRole role,
+            CancellationToken cancellationToken = default);
 
         Task<AccountResult<AccountUserListResponse>> ListUsersAsync(int page, int pageSize, CancellationToken cancellationToken = default);
 
