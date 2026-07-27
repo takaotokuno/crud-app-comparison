@@ -57,11 +57,18 @@ namespace AspNetNextApp.Api.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<ActionResult<AccountUserListResponse>> ListAsync(
-            [FromQuery] int page = 1,
-            [FromQuery(Name = "page_size")] int pageSize = 20,
+            [FromQuery] ListUsersRequest request,
             CancellationToken cancellationToken = default)
         {
-            AccountResult<AccountUserListResponse> result = await userService.ListUsersAsync(page, pageSize, cancellationToken);
+            AccountResult<AccountUserListResponse> result = await userService.ListUsersAsync(
+                new ListUsersQuery(
+                    request.Query,
+                    request.Role,
+                    request.SortBy,
+                    request.SortDirection,
+                    request.Page,
+                    request.PageSize),
+                cancellationToken);
             return AccountControllerResults.ToActionResult(this, result);
         }
 

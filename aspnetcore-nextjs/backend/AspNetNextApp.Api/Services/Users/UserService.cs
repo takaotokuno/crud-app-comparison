@@ -48,20 +48,47 @@ namespace AspNetNextApp.Api.Services.Users
             return AccountResult<User>.Success(user);
         }
 
-        public async Task<AccountResult<AccountUserListResponse>> ListUsersAsync(int page, int pageSize, CancellationToken cancellationToken = default)
+        public async Task<AccountResult<AccountUserListResponse>> ListUsersAsync(ListUsersQuery query, CancellationToken cancellationToken = default)
         {
-            int normalizedPage = Math.Max(page, 1);
-            int normalizedPageSize = Math.Clamp(pageSize, 1, MaxPageSize);
+            int normalizedPage = Math.Max(query.Page, 1);
+            int normalizedPageSize = Math.Clamp(query.PageSize, 1, MaxPageSize);
 
-            IQueryable<User> users = dbContext.Users.AsNoTracking().OrderBy(user => user.Email);
+            IQueryable<User> users = dbContext.Users.AsNoTracking();
+            if (!string.IsNullOrWhiteSpace(query.Query))
+            {
+                string keyword = query.Query.Trim();
+                users = users.Where(user => user.Email.Contains(keyword) || user.Name.Contains(keyword));
+            }
+
+            if (query.Role.HasValue)
+            {
+                users = users.Where(user => user.Role == query.Role.Value);
+            }
+
             int totalCount = await users.CountAsync(cancellationToken);
-            List<AccountUserResponse> items = await users
+            List<AccountUserResponse> items = await ApplySort(users, query.SortBy, query.SortDirection)
                 .Skip((normalizedPage - 1) * normalizedPageSize)
                 .Take(normalizedPageSize)
                 .Select(user => ToResponse(user))
                 .ToListAsync(cancellationToken);
 
             return AccountResult<AccountUserListResponse>.Success(new AccountUserListResponse(items, normalizedPage, normalizedPageSize, totalCount));
+        }
+
+        private static IOrderedQueryable<User> ApplySort(IQueryable<User> users, string? sortBy, string? sortDirection)
+        {
+            bool descending = string.Equals(sortDirection, "desc", StringComparison.OrdinalIgnoreCase);
+
+            return sortBy?.Trim().ToLowerInvariant() switch
+            {
+                "email" => descending ? users.OrderByDescending(user => user.Email) : users.OrderBy(user => user.Email),
+                "name" => descending ? users.OrderByDescending(user => user.Name) : users.OrderBy(user => user.Name),
+                "role" => descending ? users.OrderByDescending(user => user.Role) : users.OrderBy(user => user.Role),
+                "updated_at" => descending ? users.OrderByDescending(user => user.UpdatedAt) : users.OrderBy(user => user.UpdatedAt),
+                "created_at" or _ => descending || string.IsNullOrWhiteSpace(sortDirection)
+                    ? users.OrderByDescending(user => user.CreatedAt)
+                    : users.OrderBy(user => user.CreatedAt),
+            };
         }
 
         public async Task<AccountResult<AccountUserResponse>> GetUserAsync(Guid id, CancellationToken cancellationToken = default)
