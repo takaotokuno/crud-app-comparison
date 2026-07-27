@@ -20,7 +20,7 @@ namespace AspNetNextApp.Api.Services.Users
 
         Task<AccountResult<AccountUserResponse>> UpdateUserAsync(Guid id, string email, string name, UserRole role, CancellationToken cancellationToken = default);
 
-        Task<AccountResult<bool>> DeleteUserAsync(Guid id, CancellationToken cancellationToken = default);
+        Task<AccountResult<bool>> DeleteUserAsync(Guid id, Guid currentUserId, CancellationToken cancellationToken = default);
 
         Task<AccountResult<AccountUserResponse>> ChangeUserRoleAsync(Guid id, UserRole role, CancellationToken cancellationToken = default);
 
