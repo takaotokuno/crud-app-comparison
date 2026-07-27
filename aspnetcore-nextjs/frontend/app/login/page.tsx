@@ -1,7 +1,7 @@
 "use client";
 
 import { Alert, Button, Center, Paper, PasswordInput, Stack, Text, TextInput, Title } from "@mantine/core";
-import { FormEvent, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { requestJson } from "@/lib/api";
 import { AccountUser } from "@/lib/types";
@@ -13,8 +13,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  async function login(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function login() {
     setError("");
     setIsLoading(true);
     try {
@@ -35,7 +34,18 @@ export default function LoginPage() {
 
   return (
     <Center component="main" mih="100vh" p="md">
-      <Paper component="form" onSubmit={login} w="100%" maw={420} p="xl" withBorder shadow="sm">
+      <Paper
+        component="form"
+        onSubmit={(event) => {
+          event.preventDefault();
+          void login();
+        }}
+        w="100%"
+        maw={420}
+        p="xl"
+        withBorder
+        shadow="sm"
+      >
         <Stack>
           <div>
             <Text c="dimmed" size="sm">商品在庫管理</Text>
