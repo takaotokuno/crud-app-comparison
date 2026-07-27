@@ -50,6 +50,13 @@ WebApplication app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
+    await using AsyncServiceScope scope = app.Services.CreateAsyncScope();
+    AppDbContext dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await dbContext.Database.MigrateAsync();
+    await DatabaseSeeder.SeedAsync(
+        dbContext,
+        scope.ServiceProvider.GetRequiredService<IPasswordHasher<User>>());
+
     _ = app.UseSwagger();
     _ = app.UseSwaggerUI();
 }
