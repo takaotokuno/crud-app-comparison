@@ -42,11 +42,15 @@ namespace AspNetNextApp.Api.Contracts.Stocks
 
     public sealed record UpdateStockRequest(
         [property: Range(0, int.MaxValue)]
-        int Quantity,
+        int SafetyStock);
+
+    public sealed record AdjustStockRequest(
+        [property: Range(0, int.MaxValue)]
+        int QuantityAfter,
 
         [property: Range(0, int.MaxValue)]
-        int SafetyStock,
+        int ExpectedQuantity,
 
-        [property: MaxLength(255)]
-        string? Reason);
+        [property: Required, MaxLength(255)]
+        string Reason);
 }

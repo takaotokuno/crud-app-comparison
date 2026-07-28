@@ -87,13 +87,39 @@ namespace AspNetNextApp.Api.Services.Stocks
                 return StockResult<StockDetailResponse>.Failure("Stock was not found.", StockErrorType.NotFound);
             }
 
-            if (stock.Quantity != command.Quantity)
+            stock.UpdateSafetyStock(command.SafetyStock);
+            _ = await dbContext.SaveChangesAsync(cancellationToken);
+
+            return StockResult<StockDetailResponse>.Success(ToDetailResponse(stock));
+        }
+
+        public async Task<StockResult<StockDetailResponse>> AdjustAsync(AdjustStockCommand command, CancellationToken cancellationToken = default)
+        {
+            Stock? stock = await FindStockAsync(command.Id, cancellationToken);
+            if (stock is null)
             {
-                StockTransaction transaction = stock.AdjustTo(command.Quantity, command.Reason);
-                _ = dbContext.StockTransactions.Add(transaction);
+                return StockResult<StockDetailResponse>.Failure("Stock was not found.", StockErrorType.NotFound);
             }
 
-            stock.UpdateSafetyStock(command.SafetyStock);
+            if (stock.Quantity != command.ExpectedQuantity)
+            {
+                return StockResult<StockDetailResponse>.Failure(
+                    "Stock quantity has changed. Reload the latest stock before adjusting it.",
+                    StockErrorType.Conflict);
+            }
+
+            if (stock.Quantity == command.QuantityAfter)
+            {
+                return StockResult<StockDetailResponse>.Failure("Adjusted quantity must differ from the current quantity.");
+            }
+
+            if (string.IsNullOrWhiteSpace(command.Reason))
+            {
+                return StockResult<StockDetailResponse>.Failure("Reason is required for stock adjustments.");
+            }
+
+            StockTransaction transaction = stock.AdjustTo(command.QuantityAfter, command.Reason, command.CreatedById);
+            _ = dbContext.StockTransactions.Add(transaction);
             _ = await dbContext.SaveChangesAsync(cancellationToken);
 
             return StockResult<StockDetailResponse>.Success(ToDetailResponse(stock));

@@ -1,3 +1,5 @@
+using System.Security.Claims;
+
 using AspNetNextApp.Api.Attribute;
 using AspNetNextApp.Api.Contracts.Stocks;
 using AspNetNextApp.Api.Enums;
@@ -81,7 +83,7 @@ namespace AspNetNextApp.Api.Controllers
             CancellationToken cancellationToken)
         {
             StockResult<StockDetailResponse> result = await stockService.UpdateAsync(
-                new UpdateStockCommand(id, request.Quantity, request.SafetyStock, request.Reason),
+                new UpdateStockCommand(id, request.SafetyStock),
                 cancellationToken);
 
             return ToActionResult(result);
@@ -100,6 +102,32 @@ namespace AspNetNextApp.Api.Controllers
             CancellationToken cancellationToken)
         {
             return UpdateAsync(id, request, cancellationToken);
+        }
+
+        [HttpPost("{id:guid}/adjustments")]
+        [UserRole(UserRole.Admin)]
+        [ProducesResponseType(typeof(StockDetailResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        public async Task<ActionResult<StockDetailResponse>> AdjustAsync(
+            Guid id,
+            [FromBody] AdjustStockRequest request,
+            CancellationToken cancellationToken)
+        {
+            StockResult<StockDetailResponse> result = await stockService.AdjustAsync(
+                new AdjustStockCommand(id, request.QuantityAfter, request.ExpectedQuantity, request.Reason, GetCurrentUserId()),
+                cancellationToken);
+
+            return ToActionResult(result);
+        }
+
+        private Guid? GetCurrentUserId()
+        {
+            string? idValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return Guid.TryParse(idValue, out Guid id) ? id : null;
         }
 
         private ActionResult<T> ToActionResult<T>(StockResult<T> result)

@@ -11,5 +11,7 @@ namespace AspNetNextApp.Api.Services.Stocks
         Task<StockResult<StockDetailResponse>> CreateAsync(CreateStockCommand command, CancellationToken cancellationToken = default);
 
         Task<StockResult<StockDetailResponse>> UpdateAsync(UpdateStockCommand command, CancellationToken cancellationToken = default);
+
+        Task<StockResult<StockDetailResponse>> AdjustAsync(AdjustStockCommand command, CancellationToken cancellationToken = default);
     }
 }

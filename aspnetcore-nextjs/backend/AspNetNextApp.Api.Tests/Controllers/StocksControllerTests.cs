@@ -65,7 +65,7 @@ namespace AspNetNextApp.Api.Tests.Controllers
             StockDetailResponse response = new(stockId, Guid.NewGuid(), "SKU-001", "Coffee Beans", 8, 3, false, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow);
             CapturingStockService service = new() { UpdateResult = StockResult<StockDetailResponse>.Success(response) };
             StocksController controller = new(service);
-            UpdateStockRequest request = new(8, 3, "Counted");
+            UpdateStockRequest request = new(3);
 
             ActionResult<StockDetailResponse> actionResult = await controller.UpdateAsync(stockId, request, CancellationToken.None);
 
@@ -73,9 +73,7 @@ namespace AspNetNextApp.Api.Tests.Controllers
             Assert.Same(response, okResult.Value);
             Assert.NotNull(service.CapturedUpdateCommand);
             Assert.Equal(stockId, service.CapturedUpdateCommand.Id);
-            Assert.Equal(8, service.CapturedUpdateCommand.Quantity);
             Assert.Equal(3, service.CapturedUpdateCommand.SafetyStock);
-            Assert.Equal("Counted", service.CapturedUpdateCommand.Reason);
         }
 
         [Fact]
@@ -91,6 +89,7 @@ namespace AspNetNextApp.Api.Tests.Controllers
         [InlineData(nameof(StocksController.CreateAsync), "Admin")]
         [InlineData(nameof(StocksController.UpdateAsync), "Admin,Staff")]
         [InlineData(nameof(StocksController.PatchAsync), "Admin,Staff")]
+        [InlineData(nameof(StocksController.AdjustAsync), "Admin")]
         public void StockEndpoints_DeclareExpectedRoles(string actionName, string expectedRoles)
         {
             System.Reflection.MethodInfo method = typeof(StocksController).GetMethods().Single(method => method.Name == actionName);
@@ -104,10 +103,12 @@ namespace AspNetNextApp.Api.Tests.Controllers
         {
             public ListStocksQuery? CapturedListQuery { get; private set; }
             public UpdateStockCommand? CapturedUpdateCommand { get; private set; }
+            public AdjustStockCommand? CapturedAdjustCommand { get; private set; }
             public StockResult<StockListResponse> ListResult { get; init; } = StockResult<StockListResponse>.Failure("Unexpected call.");
             public StockResult<StockDetailResponse> GetResult { get; init; } = StockResult<StockDetailResponse>.Failure("Unexpected call.");
             public StockResult<StockDetailResponse> CreateResult { get; init; } = StockResult<StockDetailResponse>.Failure("Unexpected call.");
             public StockResult<StockDetailResponse> UpdateResult { get; init; } = StockResult<StockDetailResponse>.Failure("Unexpected call.");
+            public StockResult<StockDetailResponse> AdjustResult { get; init; } = StockResult<StockDetailResponse>.Failure("Unexpected call.");
 
             public Task<StockResult<StockListResponse>> ListAsync(ListStocksQuery query, CancellationToken cancellationToken = default)
             {
@@ -129,6 +130,12 @@ namespace AspNetNextApp.Api.Tests.Controllers
             {
                 CapturedUpdateCommand = command;
                 return Task.FromResult(UpdateResult);
+            }
+
+            public Task<StockResult<StockDetailResponse>> AdjustAsync(AdjustStockCommand command, CancellationToken cancellationToken = default)
+            {
+                CapturedAdjustCommand = command;
+                return Task.FromResult(AdjustResult);
             }
         }
     }

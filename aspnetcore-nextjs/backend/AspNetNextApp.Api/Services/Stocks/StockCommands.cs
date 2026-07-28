@@ -6,5 +6,7 @@ namespace AspNetNextApp.Api.Services.Stocks
 
     public sealed record CreateStockCommand(Guid ProductId, int Quantity, int SafetyStock);
 
-    public sealed record UpdateStockCommand(Guid Id, int Quantity, int SafetyStock, string? Reason);
+    public sealed record UpdateStockCommand(Guid Id, int SafetyStock);
+
+    public sealed record AdjustStockCommand(Guid Id, int QuantityAfter, int ExpectedQuantity, string Reason, Guid? CreatedById);
 }
