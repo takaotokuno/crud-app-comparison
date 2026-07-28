@@ -32,34 +32,34 @@ namespace AspNetNextApp.Api.Contracts.Users
     }
 
     public sealed record CreateUserRequest(
-        [property: Required]
-        [property: EmailAddress]
-        [property: MaxLength(255)]
+        [param: Required]
+        [param: EmailAddress]
+        [param: MaxLength(255)]
         string Email,
 
-        [property: Required]
-        [property: MinLength(8)]
-        [property: MaxLength(200)]
+        [param: Required]
+        [param: MinLength(8)]
+        [param: MaxLength(200)]
         string Password,
 
-        [property: Required]
-        [property: MaxLength(100)]
+        [param: Required]
+        [param: MaxLength(100)]
         string Name,
 
         UserRole Role);
 
     public sealed record UpdateUserRequest(
-        [property: Required]
-        [property: EmailAddress]
-        [property: MaxLength(255)]
+        [param: Required]
+        [param: EmailAddress]
+        [param: MaxLength(255)]
         string Email,
 
-        [property: MinLength(8)]
-        [property: MaxLength(200)]
+        [param: MinLength(8)]
+        [param: MaxLength(200)]
         string? Password,
 
-        [property: Required]
-        [property: MaxLength(100)]
+        [param: Required]
+        [param: MaxLength(100)]
         string Name,
 
         UserRole Role);

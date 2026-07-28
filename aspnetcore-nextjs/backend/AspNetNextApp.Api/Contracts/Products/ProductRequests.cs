@@ -41,51 +41,51 @@ namespace AspNetNextApp.Api.Contracts.Products
     public sealed record GetProductRequest(Guid Id);
 
     public sealed record CreateProductRequest(
-        [property: Required]
-        [property: RegularExpression(@"^[A-Za-z0-9_-]{1,32}$")]
-        [property: MaxLength(32)]
+        [param: Required]
+        [param: RegularExpression(@"^[A-Za-z0-9_-]{1,32}$")]
+        [param: MaxLength(32)]
         string Sku,
 
-        [property: Required]
-        [property: MaxLength(100)]
+        [param: Required]
+        [param: MaxLength(100)]
         string Name,
 
-        [property: MaxLength(1000)]
+        [param: MaxLength(1000)]
         string? Description,
 
-        [property: MaxLength(50)]
+        [param: MaxLength(50)]
         string? Category,
 
-        [property: Range(0, int.MaxValue)]
+        [param: Range(0, int.MaxValue)]
         int Price,
 
         ProductStatus Status,
 
-        [property: Range(0, int.MaxValue)]
+        [param: Range(0, int.MaxValue)]
         int InitialQuantity,
 
-        [property: Range(0, int.MaxValue)]
+        [param: Range(0, int.MaxValue)]
         int SafetyStock);
 
     public sealed record UpdateProductRequest(
         Guid Id,
 
-        [property: Required]
-        [property: RegularExpression(@"^[A-Za-z0-9_-]{1,32}$")]
-        [property: MaxLength(32)]
+        [param: Required]
+        [param: RegularExpression(@"^[A-Za-z0-9_-]{1,32}$")]
+        [param: MaxLength(32)]
         string Sku,
 
-        [property: Required]
-        [property: MaxLength(100)]
+        [param: Required]
+        [param: MaxLength(100)]
         string Name,
 
-        [property: MaxLength(1000)]
+        [param: MaxLength(1000)]
         string? Description,
 
-        [property: MaxLength(50)]
+        [param: MaxLength(50)]
         string? Category,
 
-        [property: Range(0, int.MaxValue)]
+        [param: Range(0, int.MaxValue)]
         int Price,
 
         ProductStatus Status);
