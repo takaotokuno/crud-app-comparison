@@ -26,6 +26,6 @@ namespace AspNetNextApp.Api.Contracts.StockTransactions
         Guid ProductId,
         StockTransactionType Type,
         int QuantityDelta,
-        [property: MaxLength(255)]
+        [param: MaxLength(255)]
         string? Reason);
 }

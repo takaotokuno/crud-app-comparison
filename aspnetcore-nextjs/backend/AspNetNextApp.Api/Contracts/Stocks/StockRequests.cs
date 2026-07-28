@@ -34,23 +34,23 @@ namespace AspNetNextApp.Api.Contracts.Stocks
     public sealed record CreateStockRequest(
         Guid ProductId,
 
-        [property: Range(0, int.MaxValue)]
+        [param: Range(0, int.MaxValue)]
         int Quantity,
 
-        [property: Range(0, int.MaxValue)]
+        [param: Range(0, int.MaxValue)]
         int SafetyStock);
 
     public sealed record UpdateStockRequest(
-        [property: Range(0, int.MaxValue)]
+        [param: Range(0, int.MaxValue)]
         int SafetyStock);
 
     public sealed record AdjustStockRequest(
-        [property: Range(0, int.MaxValue)]
+        [param: Range(0, int.MaxValue)]
         int QuantityAfter,
 
-        [property: Range(0, int.MaxValue)]
+        [param: Range(0, int.MaxValue)]
         int ExpectedQuantity,
 
-        [property: Required, MaxLength(255)]
+        [param: Required, MaxLength(255)]
         string Reason);
 }

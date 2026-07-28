@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 using AspNetNextApp.Api.Contracts.Auth;
 using AspNetNextApp.Api.Contracts.Users;
 using AspNetNextApp.Api.Controllers;
@@ -15,6 +17,23 @@ namespace AspNetNextApp.Api.Tests.Controllers
 {
     public sealed class AuthControllerTests
     {
+        [Fact]
+        public void LoginRequest_DefinesValidationMetadataOnPrimaryConstructorParameters()
+        {
+            System.Reflection.ConstructorInfo constructor = Assert.Single(typeof(LoginRequest).GetConstructors());
+
+            Assert.All(
+                constructor.GetParameters(),
+                parameter => Assert.Contains(
+                    parameter.GetCustomAttributes(inherit: true),
+                    attribute => attribute is ValidationAttribute));
+            Assert.All(
+                typeof(LoginRequest).GetProperties(),
+                property => Assert.DoesNotContain(
+                    property.GetCustomAttributes(inherit: true),
+                    attribute => attribute is ValidationAttribute));
+        }
+
         [Fact]
         public async Task RegisterAsync_WhenServiceSucceedsReturnsCreatedUser()
         {
