@@ -7,6 +7,7 @@ using AspNetNextApp.Api.Services.Accounts;
 using AspNetNextApp.Api.Services.Users;
 
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
 
@@ -67,6 +68,23 @@ namespace AspNetNextApp.Api.Tests.Controllers
         }
 
         [Theory]
+        [InlineData(AccountErrorType.Validation)]
+        [InlineData(null)]
+        public async Task ListAsync_WhenServiceReturnsInvalidFailureReturnsBadRequest(AccountErrorType? errorType)
+        {
+            CapturingUserService service = new()
+            {
+                ListResult = new AccountResult<AccountUserListResponse>(null, false, "Invalid user query.", errorType)
+            };
+            UsersController controller = new(service);
+
+            ActionResult<AccountUserListResponse> actionResult = await controller.ListAsync(new ListUsersRequest(), CancellationToken.None);
+
+            ObjectResult objectResult = Assert.IsType<ObjectResult>(actionResult.Result);
+            Assert.Equal(StatusCodes.Status400BadRequest, objectResult.StatusCode);
+        }
+
+        [Theory]
         [InlineData(nameof(UsersController.ListAsync), null)]
         [InlineData(nameof(UsersController.CreateAsync), null)]
         [InlineData(nameof(UsersController.GetAsync), "{id:guid}")]
@@ -88,6 +106,8 @@ namespace AspNetNextApp.Api.Tests.Controllers
         {
             public string? CapturedPassword { get; private set; }
             public ListUsersQuery? CapturedListQuery { get; private set; }
+            public AccountResult<AccountUserListResponse> ListResult { get; init; } =
+                AccountResult<AccountUserListResponse>.Success(new AccountUserListResponse([], 1, 20, 0));
 
             public Task<AccountResult<User>> CreateUserAsync(string email, string password, string name, UserRole role, CancellationToken cancellationToken = default)
             {
@@ -99,7 +119,7 @@ namespace AspNetNextApp.Api.Tests.Controllers
             public Task<AccountResult<AccountUserListResponse>> ListUsersAsync(ListUsersQuery query, CancellationToken cancellationToken = default)
             {
                 CapturedListQuery = query;
-                return Task.FromResult(AccountResult<AccountUserListResponse>.Success(new AccountUserListResponse([], query.Page, query.PageSize, 0)));
+                return Task.FromResult(ListResult);
             }
             public Task<AccountResult<AccountUserResponse>> GetUserAsync(Guid id, CancellationToken cancellationToken = default) => throw new NotImplementedException();
             public Task<AccountResult<AccountUserResponse>> UpdateUserAsync(Guid id, string email, string name, UserRole role, CancellationToken cancellationToken = default) => throw new NotImplementedException();

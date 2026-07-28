@@ -128,6 +128,23 @@ namespace AspNetNextApp.Api.Tests.Controllers
             Assert.Equal(error, objectResult.Value?.GetType().GetProperty("message")?.GetValue(objectResult.Value));
         }
 
+        [Theory]
+        [InlineData(ProductErrorType.Validation)]
+        [InlineData(null)]
+        public async Task ListAsync_WhenServiceReturnsInvalidFailureReturnsBadRequest(ProductErrorType? errorType)
+        {
+            CapturingProductService service = new()
+            {
+                ListResult = new ProductResult<ProductListResponse>(null, false, "Invalid product query.", errorType)
+            };
+            ProductsController controller = new(service);
+
+            ActionResult<ProductListResponse> actionResult = await controller.ListAsync(new ListProductsRequest(), CancellationToken.None);
+
+            ObjectResult objectResult = Assert.IsType<ObjectResult>(actionResult.Result);
+            Assert.Equal(StatusCodes.Status400BadRequest, objectResult.StatusCode);
+        }
+
         [Fact]
         public async Task DeleteAsync_WhenServiceSucceedsReturnsNoContent()
         {

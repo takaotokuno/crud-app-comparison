@@ -76,8 +76,8 @@ namespace AspNetNextApp.Api.Controllers
             int statusCode = result.ErrorType switch
             {
                 StockTransactionErrorType.NotFound => StatusCodes.Status404NotFound,
-                StockTransactionErrorType.Validation => throw new NotImplementedException(),
-                null => throw new NotImplementedException(),
+                StockTransactionErrorType.Validation => StatusCodes.Status400BadRequest,
+                null => StatusCodes.Status400BadRequest,
                 _ => StatusCodes.Status400BadRequest,
             };
 

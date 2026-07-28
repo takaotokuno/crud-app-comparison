@@ -23,8 +23,8 @@ namespace AspNetNextApp.Api.Controllers.Shared
                 AccountErrorType.NotFound => controller.NotFound(error),
                 AccountErrorType.Conflict => controller.Conflict(error),
                 AccountErrorType.Unauthorized => controller.Unauthorized(error),
-                AccountErrorType.Validation => throw new NotImplementedException(),
-                null => throw new NotImplementedException(),
+                AccountErrorType.Validation => controller.BadRequest(error),
+                null => controller.BadRequest(error),
                 _ => controller.BadRequest(error),
             };
         }
