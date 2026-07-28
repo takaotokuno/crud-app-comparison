@@ -2,7 +2,7 @@ services:
   backend:
     build:
       context: ./backend
-      dockerfile: AspNetNextApp.Api/Dockerfile
+      dockerfile: Dockerfile
     container_name: aspnet-backend
     ports:
       - "5000:8080"

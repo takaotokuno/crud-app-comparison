@@ -3,6 +3,7 @@ WORKDIR /src
 
 COPY AspNetNextApp.sln ./
 COPY AspNetNextApp.Api/AspNetNextApp.Api.csproj ./AspNetNextApp.Api/
+COPY AspNetNextApp.Api.Tests/AspNetNextApp.Api.Tests.csproj ./AspNetNextApp.Api.Tests/
 
 RUN dotnet restore ./AspNetNextApp.sln
 
