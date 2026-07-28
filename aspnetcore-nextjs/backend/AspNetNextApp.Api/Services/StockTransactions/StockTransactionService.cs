@@ -1,6 +1,7 @@
 using AspNetNextApp.Api.Contracts.StockTransactions;
 using AspNetNextApp.Api.Data;
 using AspNetNextApp.Api.Entities;
+using AspNetNextApp.Api.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace AspNetNextApp.Api.Services.StockTransactions
@@ -45,6 +46,12 @@ namespace AspNetNextApp.Api.Services.StockTransactions
             CreateStockTransactionCommand command,
             CancellationToken cancellationToken = default)
         {
+            if (command.Type is not StockTransactionType.Inbound and not StockTransactionType.Outbound)
+            {
+                return StockTransactionResult<StockTransactionResponse>.Failure(
+                    "Only inbound and outbound transactions can be registered through the general transaction endpoint. Use Stock Adjust for adjustments.");
+            }
+
             Stock? stock = await dbContext.Stocks
                 .Include(candidate => candidate.Product)
                 .FirstOrDefaultAsync(candidate => candidate.ProductId == command.ProductId, cancellationToken);
