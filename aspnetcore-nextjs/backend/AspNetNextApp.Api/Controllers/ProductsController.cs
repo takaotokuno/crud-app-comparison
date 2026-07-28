@@ -129,8 +129,8 @@ namespace AspNetNextApp.Api.Controllers
             {
                 ProductErrorType.NotFound => StatusCodes.Status404NotFound,
                 ProductErrorType.Conflict => StatusCodes.Status409Conflict,
-                ProductErrorType.Validation => throw new NotImplementedException(),
-                null => throw new NotImplementedException(),
+                ProductErrorType.Validation => StatusCodes.Status400BadRequest,
+                null => StatusCodes.Status400BadRequest,
                 _ => StatusCodes.Status400BadRequest,
             };
 
