@@ -54,6 +54,10 @@ namespace AspNetNextApp.Api.Contracts.Users
         [property: MaxLength(255)]
         string Email,
 
+        [property: MinLength(8)]
+        [property: MaxLength(200)]
+        string? Password,
+
         [property: Required]
         [property: MaxLength(100)]
         string Name,

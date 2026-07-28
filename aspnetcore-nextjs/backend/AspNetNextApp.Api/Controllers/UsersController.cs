@@ -97,6 +97,7 @@ namespace AspNetNextApp.Api.Controllers
             AccountResult<AccountUserResponse> result = await userService.UpdateUserAsync(
                 id,
                 request.Email,
+                request.Password,
                 request.Name,
                 request.Role,
                 cancellationToken);

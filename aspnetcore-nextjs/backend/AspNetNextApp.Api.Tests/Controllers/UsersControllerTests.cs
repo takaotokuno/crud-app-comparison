@@ -67,6 +67,19 @@ namespace AspNetNextApp.Api.Tests.Controllers
             Assert.Equal(new ListUsersQuery("alice", UserRole.Staff, "name", "desc", 2, 10), service.CapturedListQuery);
         }
 
+        [Fact]
+        public async Task UpdateAsync_ForwardsOptionalPassword()
+        {
+            CapturingUserService service = new();
+            UsersController controller = new(service);
+            Guid id = Guid.NewGuid();
+            UpdateUserRequest request = new("staff@example.com", "new-password", "Staff User", UserRole.Staff);
+
+            _ = await controller.UpdateAsync(id, request, CancellationToken.None);
+
+            Assert.Equal("new-password", service.CapturedPassword);
+        }
+
         [Theory]
         [InlineData(AccountErrorType.Validation)]
         [InlineData(null)]
@@ -122,7 +135,12 @@ namespace AspNetNextApp.Api.Tests.Controllers
                 return Task.FromResult(ListResult);
             }
             public Task<AccountResult<AccountUserResponse>> GetUserAsync(Guid id, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-            public Task<AccountResult<AccountUserResponse>> UpdateUserAsync(Guid id, string email, string name, UserRole role, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+            public Task<AccountResult<AccountUserResponse>> UpdateUserAsync(Guid id, string email, string? password, string name, UserRole role, CancellationToken cancellationToken = default)
+            {
+                CapturedPassword = password;
+                return Task.FromResult(AccountResult<AccountUserResponse>.Success(
+                    new AccountUserResponse(id, email, name, role, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow)));
+            }
             public Task<AccountResult<bool>> DeleteUserAsync(Guid id, Guid currentUserId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
             public Task<AccountResult<AccountUserResponse>> ChangeUserRoleAsync(Guid id, UserRole role, CancellationToken cancellationToken = default) => throw new NotImplementedException();
             public Task<bool> IsEmailInUseAsync(string email, Guid? excludedUserId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
