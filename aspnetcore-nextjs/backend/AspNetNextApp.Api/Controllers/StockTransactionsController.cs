@@ -41,6 +41,11 @@ namespace AspNetNextApp.Api.Controllers
             [FromBody] CreateStockTransactionRequest request,
             CancellationToken cancellationToken = default)
         {
+            if (request.Type == StockTransactionType.Adjustment)
+            {
+                return BadRequest(new { message = "Use the admin stock adjustment endpoint for adjustment transactions." });
+            }
+
             StockTransactionResult<StockTransactionResponse> result = await stockTransactionService.CreateAsync(
                 new CreateStockTransactionCommand(
                     request.ProductId,

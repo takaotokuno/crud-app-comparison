@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { requestJson, toOptionalValue } from "@/lib/api";
+import { useHasRole } from "@/components/AuthProvider";
 import {
   ProductDetail, StockDetail, StockPageResponse, StockTransactionListResponse,
   StockTransactionType, transactionTypeLabels,
@@ -15,16 +16,18 @@ import {
 
 export default function ProductStockPage() {
   const { id } = useParams<{ id: string }>();
+  const isAdmin = useHasRole(0);
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [stock, setStock] = useState<StockDetail | null>(null);
   const [transactions, setTransactions] = useState<StockTransactionListResponse | null>(null);
-  const [quantity, setQuantity] = useState("0");
+  const [adjustedQuantity, setAdjustedQuantity] = useState("0");
   const [safetyStock, setSafetyStock] = useState("0");
   const [stockReason, setStockReason] = useState("");
   const [transactionType, setTransactionType] = useState<StockTransactionType>(0);
   const [transactionQuantity, setTransactionQuantity] = useState("1");
   const [transactionReason, setTransactionReason] = useState("");
   const [message, setMessage] = useState("在庫情報を取得中です...");
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [isSavingStock, setIsSavingStock] = useState(false);
   const [isSavingTransaction, setIsSavingTransaction] = useState(false);
 
@@ -42,7 +45,7 @@ export default function ProductStockPage() {
       setStock(data.stock);
       setTransactions(data.transactions);
       if (data.stock) {
-        setQuantity(String(data.stock.quantity));
+        setAdjustedQuantity(String(data.stock.quantity));
         setSafetyStock(String(data.stock.safetyStock));
       }
       setMessage(data.stock ? "" : "この商品の在庫情報が見つかりません。");
@@ -55,27 +58,46 @@ export default function ProductStockPage() {
     void loadStockPage();
   }, [id]);
 
-  async function updateStock() {
+  async function updateStockSettings() {
     if (!stock) return;
-    setIsSavingStock(true);
+    setIsSavingSettings(true);
     setMessage("");
     try {
       const updated = await requestJson<StockDetail>(`/api/stocks/${stock.id}`, {
         method: "PUT",
         body: JSON.stringify({
-          quantity: Number(quantity),
           safetyStock: Number(safetyStock),
-          reason: toOptionalValue(stockReason),
         }),
       });
       setStock(updated);
-      setQuantity(String(updated.quantity));
       setSafetyStock(String(updated.safetyStock));
-      setStockReason("");
-      setMessage("現在在庫数と安全在庫数を更新しました。");
+      setMessage("安全在庫数を更新しました。");
       await loadStockPage();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "在庫更新に失敗しました。");
+    } finally {
+      setIsSavingSettings(false);
+    }
+  }
+
+  async function adjustStock() {
+    if (!stock) return;
+    setIsSavingStock(true);
+    setMessage("");
+    try {
+      await requestJson<StockDetail>(`/api/stocks/${stock.id}/adjustments`, {
+        method: "POST",
+        body: JSON.stringify({
+          quantityAfter: Number(adjustedQuantity),
+          expectedQuantity: stock.quantity,
+          reason: stockReason.trim(),
+        }),
+      });
+      setStockReason("");
+      setMessage("在庫数を補正し、調整履歴を登録しました。");
+      await loadStockPage();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "在庫補正に失敗しました。");
     } finally {
       setIsSavingStock(false);
     }
@@ -121,35 +143,55 @@ export default function ProductStockPage() {
           <Button component={Link} href={`/products/${id}`} variant="default">キャンセル</Button>
         </Group>
         {message && <Alert>{message}</Alert>}
-        <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
+        <SimpleGrid cols={{ base: 1, md: isAdmin ? 3 : 2 }} spacing="lg">
           <Paper
             component="form"
             onSubmit={(event) => {
               event.preventDefault();
-              void updateStock();
+              void updateStockSettings();
             }}
             p="lg"
             withBorder
           >
             <Stack>
-              <Title order={2} size="h3">在庫情報を直接更新</Title>
-              <Group grow align="start">
-                <NumberInput
-                  label="現在在庫数" value={quantity} min={0} required disabled={!stock}
-                  onChange={(value) => setQuantity(String(value))}
-                />
-                <NumberInput
-                  label="安全在庫数" value={safetyStock} min={0} required disabled={!stock}
-                  onChange={(value) => setSafetyStock(String(value))}
-                />
-              </Group>
-              <Textarea
-                label="更新理由" placeholder="棚卸調整など" value={stockReason} rows={3}
-                onChange={(event) => setStockReason(event.currentTarget.value)}
+              <Title order={2} size="h3">在庫設定を更新</Title>
+              <NumberInput
+                label="安全在庫数" value={safetyStock} min={0} required disabled={!stock}
+                onChange={(value) => setSafetyStock(String(value))}
               />
-              <Button type="submit" loading={isSavingStock} disabled={!stock}>在庫情報を更新</Button>
+              <Button type="submit" loading={isSavingSettings} disabled={!stock}>設定を更新</Button>
             </Stack>
           </Paper>
+          {isAdmin && (
+            <Paper
+              component="form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void adjustStock();
+              }}
+              p="lg"
+              withBorder
+            >
+              <Stack>
+                <Title order={2} size="h3">実在庫数に補正</Title>
+                <Text size="sm">現在在庫数（補正前）: {stock?.quantity ?? "-"}</Text>
+                <NumberInput
+                  label="補正後在庫数" value={adjustedQuantity} min={0} required disabled={!stock}
+                  onChange={(value) => setAdjustedQuantity(String(value))}
+                />
+                <Text size="sm" c="dimmed">
+                  調整差分: {Number(adjustedQuantity) - (stock?.quantity ?? 0)}
+                </Text>
+                <Textarea
+                  label="補正理由" placeholder="棚卸しによる差異など" value={stockReason} rows={3} required
+                  onChange={(event) => setStockReason(event.currentTarget.value)}
+                />
+                <Button type="submit" loading={isSavingStock} disabled={!stock || !stockReason.trim()}>
+                  在庫数を補正
+                </Button>
+              </Stack>
+            </Paper>
+          )}
           <Paper
             component="form"
             onSubmit={(event) => {
@@ -168,7 +210,6 @@ export default function ProductStockPage() {
                 data={[
                   { value: "0", label: "入庫" },
                   { value: "1", label: "出庫" },
-                  { value: "2", label: "調整" },
                 ]}
               />
               <NumberInput
