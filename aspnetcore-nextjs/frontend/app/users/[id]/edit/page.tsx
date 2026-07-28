@@ -21,9 +21,15 @@ export default function EditUserPage() {
   }, [id]);
 
   async function updateUser(form: UserFormState) {
+    const password = form.password;
     await requestJson<AccountUser>(`/api/users/${id}`, {
       method: "PUT",
-      body: JSON.stringify({ email: form.email.trim(), name: form.name.trim(), role: form.role }),
+      body: JSON.stringify({
+        email: form.email.trim(),
+        name: form.name.trim(),
+        role: form.role,
+        ...(password ? { password } : {}),
+      }),
     });
     router.push(`/users/${id}`);
   }

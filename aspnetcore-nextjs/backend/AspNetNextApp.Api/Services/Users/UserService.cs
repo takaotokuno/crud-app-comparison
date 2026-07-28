@@ -102,6 +102,7 @@ namespace AspNetNextApp.Api.Services.Users
         public async Task<AccountResult<AccountUserResponse>> UpdateUserAsync(
             Guid id,
             string email,
+            string? password,
             string name,
             UserRole role,
             CancellationToken cancellationToken = default)
@@ -127,6 +128,11 @@ namespace AspNetNextApp.Api.Services.Users
             user.Email = email;
             user.Name = name;
             user.Role = role;
+            if (!string.IsNullOrEmpty(password))
+            {
+                user.PasswordHash = passwordHasher.HashPassword(user, password);
+            }
+
             _ = await dbContext.SaveChangesAsync(cancellationToken);
             return AccountResult<AccountUserResponse>.Success(ToResponse(user));
         }

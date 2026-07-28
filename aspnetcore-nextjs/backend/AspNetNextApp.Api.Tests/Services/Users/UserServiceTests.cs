@@ -123,11 +123,45 @@ namespace AspNetNextApp.Api.Tests.Services.Users
 
             AccountResult<AccountUserResponse> result = useRoleEndpoint
                 ? await service.ChangeUserRoleAsync(admin.Id, UserRole.Staff)
-                : await service.UpdateUserAsync(admin.Id, admin.Email, admin.Name, UserRole.Staff);
+                : await service.UpdateUserAsync(admin.Id, admin.Email, null, admin.Name, UserRole.Staff);
 
             Assert.False(result.IsSuccess);
             Assert.Equal(AccountErrorType.Conflict, result.ErrorType);
             Assert.Equal(UserRole.Admin, (await dbContext.Users.FindAsync(admin.Id))!.Role);
+        }
+
+        [Fact]
+        public async Task UpdateUserAsync_WhenPasswordIsProvidedUpdatesPasswordHash()
+        {
+            await using AppDbContext dbContext = CreateDbContext();
+            User user = AddUser(dbContext, UserRole.Staff);
+            _ = await dbContext.SaveChangesAsync();
+            PasswordHasher<User> hasher = new();
+
+            AccountResult<AccountUserResponse> result = await new UserService(dbContext, hasher).UpdateUserAsync(
+                user.Id, user.Email, "new-password", user.Name, user.Role);
+
+            Assert.True(result.IsSuccess);
+            Assert.Equal(
+                PasswordVerificationResult.Success,
+                hasher.VerifyHashedPassword(user, user.PasswordHash, "new-password"));
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        public async Task UpdateUserAsync_WhenPasswordIsNotProvidedKeepsPasswordHash(string? password)
+        {
+            await using AppDbContext dbContext = CreateDbContext();
+            User user = AddUser(dbContext, UserRole.Staff);
+            string originalPasswordHash = user.PasswordHash;
+            _ = await dbContext.SaveChangesAsync();
+
+            AccountResult<AccountUserResponse> result = await CreateService(dbContext).UpdateUserAsync(
+                user.Id, user.Email, password, user.Name, user.Role);
+
+            Assert.True(result.IsSuccess);
+            Assert.Equal(originalPasswordHash, user.PasswordHash);
         }
 
         private static User AddUser(

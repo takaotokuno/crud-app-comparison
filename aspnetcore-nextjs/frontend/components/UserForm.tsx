@@ -35,7 +35,7 @@ export function UserForm({
       setMessage("メールアドレスと表示名を入力してください。");
       return;
     }
-    if (requirePassword && form.password.length < 8) {
+    if ((requirePassword || form.password.length > 0) && form.password.length < 8) {
       setMessage("パスワードは8文字以上で入力してください。");
       return;
     }
@@ -76,17 +76,15 @@ export function UserForm({
           allowDeselect={false}
           onChange={(value) => setForm({ ...form, role: Number(value) as UserRole })}
         />
-        {requirePassword && (
-          <PasswordInput
-            required
-            label="パスワード"
-            description="8文字以上で入力してください。"
-            minLength={8}
-            maxLength={200}
-            value={form.password}
-            onChange={(event) => setForm({ ...form, password: event.currentTarget.value })}
-          />
-        )}
+        <PasswordInput
+          required={requirePassword}
+          label="パスワード"
+          description={requirePassword ? "8文字以上で入力してください。" : "変更する場合のみ、8文字以上で入力してください。"}
+          minLength={requirePassword ? 8 : undefined}
+          maxLength={200}
+          value={form.password}
+          onChange={(event) => setForm({ ...form, password: event.currentTarget.value })}
+        />
         <Group justify="flex-end">
           <Button component={Link} href={cancelHref} variant="default">キャンセル</Button>
           <Button type="submit" loading={isSubmitting}>{submitLabel}</Button>
