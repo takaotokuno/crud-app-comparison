@@ -30,7 +30,7 @@ export function AppHeader() {
           <Stack gap={0}>
             <Text c="dimmed" size="xs">ASP.NET Core Web API + Next.js</Text>
             <Link href="/products">
-              <Title component={Link} order={2} td="none" c="dark">
+              <Title order={2} td="none" c="dark">
                 商品在庫管理
               </Title>
             </Link>
