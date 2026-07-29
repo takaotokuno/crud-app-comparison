@@ -29,9 +29,9 @@ export function AppHeader() {
         <Group justify="space-between" align="center" wrap="wrap">
           <Stack gap={0}>
             <Text c="dimmed" size="xs">ASP.NET Core Web API + Next.js</Text>
-            <Title component={Link} href="/products" order={2} td="none" c="dark">
-              商品在庫管理
-            </Title>
+            <Link href="/products" style={{ color: "inherit", textDecoration: "none" }}>
+              <Title order={2}>商品在庫管理</Title>
+            </Link>
           </Stack>
           <Group component="nav" gap="sm" wrap="wrap">
             <Button component={Link} href="/products" variant="default">商品一覧</Button>
