@@ -55,9 +55,9 @@ namespace AspNetNextApp.Api.Controllers
                     GetCurrentUserId()),
                 cancellationToken);
 
-            return !result.IsSuccess
-                ? ToActionResult(result)
-                : (ActionResult<StockTransactionResponse>)CreatedAtAction(nameof(ListAsync), new { product_id = result.Value!.ProductId }, result.Value);
+            return result.IsSuccess
+                ? StatusCode(StatusCodes.Status201Created, result.Value)
+                : ToActionResult(result);
         }
 
         private Guid? GetCurrentUserId()
