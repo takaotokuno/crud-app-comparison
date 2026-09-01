@@ -58,6 +58,27 @@ namespace AspNetNextApp.Api.Tests.Controllers
             Assert.Equal(error, objectResult.Value?.GetType().GetProperty("message")?.GetValue(objectResult.Value));
         }
 
+        [Theory]
+        [InlineData(StockErrorType.Validation)]
+        [InlineData(null)]
+        public async Task ListAsync_WhenServiceReturnsInvalidFailureReturnsBadRequest(StockErrorType? errorType)
+        {
+            const string error = "Invalid stock query.";
+            CapturingStockService service = new()
+            {
+                ListResult = new StockResult<StockListResponse>(null, false, error, errorType)
+            };
+            StocksController controller = new(service);
+
+            ActionResult<StockListResponse> actionResult = await controller.ListAsync(
+                new ListStocksRequest(),
+                CancellationToken.None);
+
+            ObjectResult objectResult = Assert.IsType<ObjectResult>(actionResult.Result);
+            Assert.Equal(StatusCodes.Status400BadRequest, objectResult.StatusCode);
+            Assert.Equal(error, objectResult.Value?.GetType().GetProperty("message")?.GetValue(objectResult.Value));
+        }
+
         [Fact]
         public async Task UpdateAsync_ForwardsBodyAndReturnsOk()
         {
